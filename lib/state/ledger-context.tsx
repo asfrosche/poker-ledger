@@ -11,8 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { computeGameLedger, type GameLedger } from "@/lib/calculations/ledger";
-import { ledgerReducer, type LedgerAction, type LedgerActionInput } from "@/lib/state/reducer";
-import { buildSampleState } from "@/lib/state/sample-data";
+import { createEmptyState, ledgerReducer, type LedgerAction, type LedgerActionInput } from "@/lib/state/reducer";
 import { loadLedgerState, saveLedgerState } from "@/lib/state/storage";
 import { useToast } from "@/components/ui/toast";
 import type { Game, LedgerState } from "@/types";
@@ -43,7 +42,7 @@ function wrappedReducer(state: Wrapped, action: LedgerAction): Wrapped {
 
 /**
  * Holds the whole app state. Renders children only after the saved ledger has been
- * loaded from localStorage (or seeded with sample data on first launch), which avoids
+ * loaded from localStorage (or started empty on first launch), which avoids
  * server/client hydration mismatches.
  */
 export function LedgerProvider({ children }: { children: ReactNode }) {
@@ -52,7 +51,7 @@ export function LedgerProvider({ children }: { children: ReactNode }) {
   const { notify } = useToast();
 
   useEffect(() => {
-    const loaded = loadLedgerState() ?? buildSampleState();
+    const loaded = loadLedgerState() ?? createEmptyState();
     rawDispatch({ type: "hydrate", state: loaded, id: newId(), at: new Date().toISOString() });
   }, []);
 
