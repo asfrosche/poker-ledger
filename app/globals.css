@@ -17,6 +17,24 @@
   --warn-soft: #f7efdc;
 }
 
+/* Night mode. Set by the theme script in app/layout.tsx and the header toggle. */
+:root[data-theme="dark"] {
+  --bg: #151613;
+  --panel: #1f201d;
+  --surface: #2a2b27;
+  --ink: #ecebe6;
+  --muted: #a0a097;
+  --line: #3a3b36;
+  --accent: #f07a4d;
+  --accent-soft: #3a261d;
+  --profit: #5cc98a;
+  --profit-soft: #1d3327;
+  --loss: #f07a63;
+  --loss-soft: #3a221e;
+  --warn: #e8b451;
+  --warn-soft: #3a2f18;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-panel: var(--panel);

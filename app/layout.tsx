@@ -19,10 +19,14 @@ export const viewport: Viewport = {
   themeColor: "#F5F4F0",
 };
 
+// Runs before first paint: uses the saved choice, otherwise the device's light/dark setting.
+const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("poker-ledger-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.dataset.theme=t;}catch(e){}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-full">
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <ToastProvider>
           <LedgerProvider>
             <AppShell>{children}</AppShell>

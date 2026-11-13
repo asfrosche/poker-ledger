@@ -94,7 +94,7 @@ const STATUS_STYLES: Record<DisplayStatus, { label: string; className: string }>
   live: { label: "Live", className: "bg-accent-soft text-accent" },
   ready: { label: "Ready to settle", className: "bg-profit-soft text-profit" },
   settling: { label: "Settling", className: "bg-warn-soft text-warn" },
-  settled: { label: "Settled", className: "bg-ink text-white" },
+  settled: { label: "Settled", className: "bg-ink text-bg" },
   archived: { label: "Archived", className: "bg-surface text-muted line-through decoration-1" },
 };
 

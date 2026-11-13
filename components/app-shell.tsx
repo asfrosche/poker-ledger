@@ -6,6 +6,7 @@ import { Handshake, History, LayoutGrid, Plus, Settings as SettingsIcon } from "
 import { clsx } from "clsx";
 import { useLedger } from "@/lib/state/ledger-context";
 import { StatusPill } from "@/components/ui/primitives";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV = [
   { href: "/chip-board", label: "Chips", icon: LayoutGrid },
@@ -51,6 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ))}
             </select>
             {selectedLedger ? <span className="hidden sm:inline-flex"><StatusPill status={selectedLedger.displayStatus} /></span> : null}
+            <ThemeToggle />
             <button
               type="button"
               onClick={() => router.push("/games/new")}
