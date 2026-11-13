@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { computeGameLedger, checkSettlementEligibility, computeGameTotals } from "@/lib/calculations/ledger";
 import { computePlayerHistory } from "@/lib/calculations/player-history";
 import { createEmptyState, ledgerReducer, type LedgerAction, type LedgerActionInput } from "@/lib/state/reducer";
-import { buildSampleState } from "@/lib/state/sample-data";
 import type { LedgerState } from "@/types";
 
 let counter = 0;
@@ -302,26 +301,11 @@ describe("historical isolation and player history", () => {
     expect(history?.totalInvestedPaise).toBe(50000);
   });
 
-  it("clearing sample data leaves real games untouched", () => {
-    const sample = buildSampleState(new Date("2026-11-13T12:00:00Z"));
-    const real = newGame(sample, "Real night").state;
+  it("clearing old sample games leaves real games untouched", () => {
+    const withSample = newGame(createEmptyState(), "Old sample", 50000, 1000, true).state;
+    const real = newGame(withSample, "Real night").state;
     const cleared = run(real, [{ type: "data/clear-samples" }]);
     expect(cleared.games.map((g) => g.name)).toEqual(["Real night"]);
     expect(cleared.buyIns.every((b) => cleared.games.some((g) => g.id === b.gameId))).toBe(true);
-  });
-});
-
-describe("sample data", () => {
-  it("first-launch sample is internally consistent and flagged as sample", () => {
-    const state = buildSampleState(new Date("2026-11-13T12:00:00Z"));
-    expect(state.games.every((g) => g.isSample)).toBe(true);
-    const finished = state.games.find((g) => g.status === "settled");
-    expect(finished).toBeDefined();
-    const ledger = computeGameLedger(state, finished!.id);
-    expect(ledger.balanced).toBe(true);
-    expect(state.settlements.find((s) => s.gameId === finished!.id)?.payments.every((p) => p.paid)).toBe(true);
-    const live = computeGameLedger(state, state.selectedGameId!);
-    expect(live.totals.reconciled).toBe(false);
-    expect(live.totals.chipDifference).toBe(500);
   });
 });
