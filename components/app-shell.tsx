@@ -100,10 +100,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-3 sm:px-6 sm:pb-10 sm:pt-8">{children}</main>
 
-      <footer className="mx-auto hidden w-full max-w-6xl px-6 pb-8 sm:block">
-        <p className="font-mono text-[11px] text-muted">
+      <footer className="mx-auto w-full max-w-6xl px-4 pb-28 sm:px-6 sm:pb-8">
+        <p className="hidden font-mono text-[11px] text-muted sm:block">
           Data is saved in this browser. The app never moves money; payments are recorded after you complete them yourself.
         </p>
+        <p className="font-mono text-[11px] text-muted">Created by asfrosche</p>
       </footer>
     </div>
   );
