@@ -26,7 +26,6 @@ function newGame(state: LedgerState, name = "Friday", buyInPaise = 50000, chips 
       buyInPaise,
       chipsPerBuyIn: chips,
       venue: "",
-      format: "",
       notes: "",
       isSample,
     },
@@ -65,7 +64,7 @@ describe("game creation and configuration", () => {
       { type: "settlement/generate", gameId },
     ]);
     const afterChange = run(finalised, [
-      { type: "game/create", name: "New", date: "2026-11-08", currency: "INR", buyInPaise: 100000, chipsPerBuyIn: 500, venue: "", format: "", notes: "" },
+      { type: "game/create", name: "New", date: "2026-11-08", currency: "INR", buyInPaise: 100000, chipsPerBuyIn: 500, venue: "", notes: "" },
     ]);
     const old = afterChange.games.find((g) => g.id === gameId);
     expect(old?.buyInPaise).toBe(50000);

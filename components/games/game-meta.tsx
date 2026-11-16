@@ -1,8 +1,8 @@
 import { formatMoney } from "@/lib/money";
-import { variantLabel } from "@/lib/game-variants";
+import { variantsLabel } from "@/lib/game-variants";
 import type { Game } from "@/types";
 
-type MetaFields = Pick<Game, "variant" | "smallBlindPaise" | "bigBlindPaise" | "currency">;
+type MetaFields = Pick<Game, "variants" | "smallBlindPaise" | "bigBlindPaise" | "currency">;
 
 /** "5 / 10" in the game's currency, or "Not recorded" for older games without blinds. */
 export function blindsText(game: Pick<MetaFields, "smallBlindPaise" | "bigBlindPaise" | "currency">): string {
@@ -18,7 +18,7 @@ export function GameMeta({ game, className }: { game: MetaFields; className?: st
   const blinds = game.smallBlindPaise === null || game.bigBlindPaise === null ? "Blinds not recorded" : `Blinds ${blindsText(game)}`;
   return (
     <p className={className ?? "text-sm text-muted"}>
-      {variantLabel(game.variant)} · {blinds}
+      {variantsLabel(game.variants)} · {blinds}
     </p>
   );
 }

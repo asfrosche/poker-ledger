@@ -46,3 +46,15 @@ export const DEFAULT_VARIANT: GameVariant = "nlh";
 export function variantLabel(key: string | null | undefined): string {
   return GAME_VARIANTS.find((v) => v.key === key)?.label ?? GAME_VARIANTS[0].label;
 }
+
+/** Labels for a game's variants, joined in order, e.g. "No-Limit Texas Hold'em + Pot-Limit Omaha". */
+export function variantsLabel(keys: readonly string[] | null | undefined): string {
+  if (!keys || keys.length === 0) return variantLabel(null);
+  return keys.map((k) => variantLabel(k)).join(" + ");
+}
+
+/** Removes repeats and keeps the order picked. An empty list falls back to No-Limit Hold'em. */
+export function normalizeVariants(keys: readonly GameVariant[] | null | undefined): GameVariant[] {
+  const unique = [...new Set(keys ?? [])];
+  return unique.length > 0 ? unique : [DEFAULT_VARIANT];
+}

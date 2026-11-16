@@ -181,22 +181,44 @@ export function EmptyState({
   );
 }
 
+/**
+ * Page title with optional actions. `keepRow` keeps the title and actions on one line at every width,
+ * with the title on the left and the actions on the right. The actions never wrap below the title.
+ */
 export function PageHeading({
   eyebrow,
   title,
   actions,
+  keepRow,
 }: {
   eyebrow?: string;
   title: string;
   actions?: ReactNode;
+  keepRow?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+    <div
+      className={
+        keepRow
+          ? "flex flex-row items-end justify-between gap-3"
+          : "flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-3"
+      }
+    >
       <div className="min-w-0">
         {eyebrow ? <p className="label mb-1">{eyebrow}</p> : null}
-        <h1 className="font-mono text-xl font-semibold uppercase tracking-[0.04em] sm:text-2xl">{title}</h1>
+        <h1
+          className={
+            keepRow
+              ? "font-mono text-base font-semibold uppercase tracking-[0.04em] sm:text-2xl"
+              : "font-mono text-xl font-semibold uppercase tracking-[0.04em] sm:text-2xl"
+          }
+        >
+          {title}
+        </h1>
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className={keepRow ? "flex shrink-0 items-center gap-2 whitespace-nowrap" : "flex flex-wrap items-center gap-2"}>{actions}</div>
+      ) : null}
     </div>
   );
 }

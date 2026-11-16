@@ -51,7 +51,7 @@ export function EquityPanel({
         }[view_.kind];
 
   return (
-    <section aria-labelledby="equity-heading" className="panel flex flex-col gap-4 p-3 sm:p-4">
+    <section aria-labelledby="equity-heading" className="panel flex flex-col gap-3 p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="equity-heading" className="label">
           Win probability
@@ -88,12 +88,12 @@ export function EquityPanel({
       ) : null}
 
       {state.seats.length > 0 ? (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2">
           {state.seats.map((seat) => {
             const seated = seat.playerId !== null;
             const entry = rows?.find((r) => r.seatId === seat.id);
             return (
-              <li key={seat.id} className="flex flex-col gap-1.5">
+              <li key={seat.id} className="flex flex-col gap-1">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className={clsx("min-w-0 truncate text-sm font-medium", !seated && "text-muted")}>{seatName(seat)}</span>
                   {hiddenCards(state, seat) > 0 ? (

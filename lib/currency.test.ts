@@ -95,13 +95,12 @@ describe("variants and blinds on saved games", () => {
       buyInPaise: 50000,
       chipsPerBuyIn: 1000,
       venue: "",
-      format: "",
       notes: "",
     });
     // Simulate a ledger saved before these fields existed.
     const legacy = JSON.parse(JSON.stringify(created));
     for (const game of legacy.games) {
-      delete game.variant;
+      delete game.variants;
       delete game.smallBlindPaise;
       delete game.bigBlindPaise;
     }
@@ -112,8 +111,47 @@ describe("variants and blinds on saved games", () => {
     const parsed = ledgerStateSchema.safeParse(legacy);
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
-    expect(parsed.data.games[0]).toMatchObject({ variant: "nlh", smallBlindPaise: null, bigBlindPaise: null });
+    expect(parsed.data.games[0]).toMatchObject({ variants: ["nlh"], smallBlindPaise: null, bigBlindPaise: null });
     expect(parsed.data.settings).toMatchObject({ currencyAuto: true, defaultSmallBlindPaise: 500, defaultBigBlindPaise: 1000 });
+  });
+
+  it("a game saved with the old single variant field loads as a one-item list", () => {
+    const state = createEmptyState();
+    const created = ledgerReducer(state, {
+      type: "game/create",
+      id: "g4",
+      at: "2026-11-16T10:00:00.000Z",
+      name: "Legacy",
+      date: "2026-11-01",
+      currency: "INR",
+      buyInPaise: 50000,
+      chipsPerBuyIn: 1000,
+      venue: "",
+      notes: "",
+    });
+    const legacy = JSON.parse(JSON.stringify(created));
+    delete legacy.games[0].variants;
+    legacy.games[0].variant = "plo";
+    const parsed = ledgerStateSchema.safeParse(legacy);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.games[0].variants).toEqual(["plo"]);
+  });
+
+  it("a mixed game keeps several variants in the order they were picked, without repeats", () => {
+    const next = ledgerReducer(createEmptyState(), {
+      type: "game/create",
+      id: "g5",
+      at: "2026-11-16T10:00:00.000Z",
+      name: "Mixed",
+      date: "2026-11-16",
+      currency: "INR",
+      buyInPaise: 50000,
+      chipsPerBuyIn: 1000,
+      venue: "",
+      notes: "",
+      variants: ["plo", "nlh", "plo"],
+    });
+    expect(next.games[0].variants).toEqual(["plo", "nlh"]);
   });
 
   it("the reducer rejects a game whose big blind is not larger than its small blind", () => {
@@ -128,7 +166,6 @@ describe("variants and blinds on saved games", () => {
       buyInPaise: 50000,
       chipsPerBuyIn: 1000,
       venue: "",
-      format: "",
       notes: "",
       smallBlindPaise: 10,
       bigBlindPaise: 10,
@@ -148,12 +185,11 @@ describe("variants and blinds on saved games", () => {
       buyInPaise: 50000,
       chipsPerBuyIn: 1000,
       venue: "",
-      format: "",
       notes: "",
-      variant: "plo",
+      variants: ["plo"],
       smallBlindPaise: 500,
       bigBlindPaise: 1000,
     });
-    expect(next.games[0]).toMatchObject({ variant: "plo", smallBlindPaise: 500, bigBlindPaise: 1000, currency: "GBP" });
+    expect(next.games[0]).toMatchObject({ variants: ["plo"], smallBlindPaise: 500, bigBlindPaise: 1000, currency: "GBP" });
   });
 });

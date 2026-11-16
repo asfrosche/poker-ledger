@@ -34,9 +34,8 @@ export function NewGameForm() {
             buyInPaise: s.defaultBuyInPaise,
             chipsPerBuyIn: s.defaultChipsPerBuyIn,
             venue: "",
-            format: s.defaultFormat,
             notes: "",
-            variant: DEFAULT_VARIANT,
+            variants: [DEFAULT_VARIANT],
             smallBlindPaise: s.defaultSmallBlindPaise,
             bigBlindPaise: s.defaultBigBlindPaise,
           }}

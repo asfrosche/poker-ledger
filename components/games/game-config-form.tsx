@@ -4,8 +4,8 @@ import { useState, type FormEvent } from "react";
 import { FieldError, FieldLabel, Button } from "@/components/ui/primitives";
 import { formatRate, formatMoney, SUPPORTED_CURRENCIES, paiseToInput, parseMoneyToPaise } from "@/lib/money";
 import { currencyInfo } from "@/lib/currency";
-import { GAME_VARIANTS } from "@/lib/game-variants";
 import { validateGameConfig, type GameConfigFormInput } from "@/lib/validation/schemas";
+import { VariantMultiSelect } from "./variant-multi-select";
 import type { Game, GameVariant } from "@/types";
 
 export interface GameConfigValues {
@@ -15,9 +15,8 @@ export interface GameConfigValues {
   buyInPaise: number;
   chipsPerBuyIn: number;
   venue: string;
-  format: string;
   notes: string;
-  variant: GameVariant;
+  variants: GameVariant[];
   smallBlindPaise: number | null;
   bigBlindPaise: number | null;
 }
@@ -42,9 +41,8 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
     buyInText: paiseToInput(initial.buyInPaise),
     chipsText: String(initial.chipsPerBuyIn),
     venue: initial.venue,
-    format: initial.format,
     notes: initial.notes,
-    variant: initial.variant ?? "nlh",
+    variants: [...(initial.variants ?? [])],
     smallBlindText: blindText(initial.smallBlindPaise),
     bigBlindText: blindText(initial.bigBlindPaise),
   });
@@ -56,7 +54,6 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
     previewPaise && Number.isInteger(previewChips) && previewChips > 0
       ? previewPaise / previewChips
       : null;
-  const variantInfo = GAME_VARIANTS.find((v) => v.key === form.variant);
 
   const set = (key: keyof GameConfigFormInput) => (event: { target: { value: string } }) =>
     setForm((current) => ({ ...current, [key]: event.target.value }));
@@ -73,14 +70,28 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
         buyInPaise: result.data.buyInPaise,
         chipsPerBuyIn: result.data.chipsPerBuyIn,
         venue: result.data.venue,
-        format: result.data.format,
         notes: result.data.notes,
-        variant: result.data.variant,
+        variants: result.data.variants,
         smallBlindPaise: result.data.smallBlindPaise,
         bigBlindPaise: result.data.bigBlindPaise,
       });
     }
   }
+
+  const variantField = (
+    <div>
+      <FieldLabel htmlFor="gc-variant">Variant</FieldLabel>
+      <VariantMultiSelect
+        id="gc-variant"
+        value={form.variants}
+        onChange={(next) => setForm((current) => ({ ...current, variants: next }))}
+        disabled={disabled}
+        invalid={!!errors.variants}
+        describedBy={errors.variants ? "gc-variant-err" : undefined}
+      />
+      <FieldError id="gc-variant-err" message={errors.variants} />
+    </div>
+  );
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2" aria-label="Game configuration">
@@ -103,21 +114,6 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
         <FieldLabel htmlFor="gc-date">Date</FieldLabel>
         <input id="gc-date" type="date" className="field num" value={form.date} onChange={set("date")} disabled={disabled} aria-invalid={!!errors.date} />
         <FieldError message={errors.date} />
-      </div>
-
-      <div>
-        <FieldLabel htmlFor="gc-variant">Variant</FieldLabel>
-        <select id="gc-variant" className="field" value={form.variant} onChange={set("variant")} disabled={disabled} aria-describedby="gc-variant-desc">
-          {GAME_VARIANTS.map((v) => (
-            <option key={v.key} value={v.key}>
-              {v.label}
-            </option>
-          ))}
-        </select>
-        <p id="gc-variant-desc" className="mt-1 text-xs text-muted">
-          {variantInfo?.description}
-        </p>
-        <FieldError message={errors.variant} />
       </div>
 
       <div>
@@ -204,20 +200,18 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
         <FieldError message={errors.bigBlindText} />
       </div>
 
-      {!compact ? (
+      {compact ? (
+        variantField
+      ) : (
         <>
           <div>
             <FieldLabel htmlFor="gc-venue">Venue</FieldLabel>
             <input id="gc-venue" className="field" value={form.venue} onChange={set("venue")} disabled={disabled} placeholder="Optional" />
             <FieldError message={errors.venue} />
           </div>
-          <div>
-            <FieldLabel htmlFor="gc-format">Format</FieldLabel>
-            <input id="gc-format" className="field" value={form.format} onChange={set("format")} disabled={disabled} placeholder="e.g. No-limit Hold'em" />
-            <FieldError message={errors.format} />
-          </div>
+          {variantField}
         </>
-      ) : null}
+      )}
 
       <div className="sm:col-span-2">
         <FieldLabel htmlFor="gc-notes">Notes</FieldLabel>

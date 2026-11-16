@@ -13,9 +13,11 @@ export const gameConfigFormSchema = z
     buyInText: z.string(),
     chipsText: z.string(),
     venue: z.string().trim().max(80, "Venue must be under 80 characters"),
-    format: z.string().trim().max(80, "Format must be under 80 characters"),
     notes: z.string().trim().max(2000, "Notes must be under 2,000 characters"),
-    variant: z.enum(["nlh", "plo", "omaha5", "hilo", "stud7", "short"], { message: "Pick a game variant" }),
+    variants: z
+      .array(z.enum(["nlh", "plo", "omaha5", "hilo", "stud7", "short"]))
+      .min(1, "Pick at least one variant")
+      .max(6, "Pick up to six variants"),
     smallBlindText: z.string(),
     bigBlindText: z.string(),
   })
@@ -122,7 +124,18 @@ const playerRecordSchema = z.object({
   createdAt: isoTimestamp,
 });
 
-const gameRecordSchema = z.object({
+const variantKey = z.enum(["nlh", "plo", "omaha5", "hilo", "stud7", "short"]);
+
+const gameRecordSchema = z.preprocess(
+  // Games saved with the single `variant` field become a one-item `variants` list.
+  (raw) => {
+    if (raw && typeof raw === "object" && !("variants" in raw)) {
+      const legacy = (raw as { variant?: unknown }).variant;
+      return { ...raw, variants: typeof legacy === "string" ? [legacy] : ["nlh"] };
+    }
+    return raw;
+  },
+  z.object({
   id: z.string(),
   number: z.number().int(),
   name: z.string(),
@@ -134,7 +147,7 @@ const gameRecordSchema = z.object({
   format: z.string(),
   notes: z.string(),
   // Games saved before variants existed default to No-Limit Hold'em with no recorded blinds.
-  variant: z.enum(["nlh", "plo", "omaha5", "hilo", "stud7", "short"]).default("nlh"),
+  variants: z.array(variantKey).min(1),
   smallBlindPaise: z.number().int().nonnegative().nullable().default(null),
   bigBlindPaise: z.number().int().nonnegative().nullable().default(null),
   status: z.enum(["open", "settling", "settled", "archived"]),
@@ -142,7 +155,8 @@ const gameRecordSchema = z.object({
   createdAt: isoTimestamp,
   settledAt: z.string().nullable(),
   archivedAt: z.string().nullable(),
-});
+  }),
+);
 
 const buyInRecordSchema = z.object({
   id: z.string(),

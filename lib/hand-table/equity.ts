@@ -44,6 +44,11 @@ export function equityStatus(state: TableState): EquityStatus {
   if (occupied.length < 2) {
     return { kind: "waiting", message: "Seat at least two players to calculate." };
   }
+  // No probabilities until at least one hole card is on the table.
+  const anyHoleCard = state.seats.some((s) => s.hole.some((c) => c !== null));
+  if (!anyHoleCard) {
+    return { kind: "waiting", message: "Deal at least one hole card to see probabilities." };
+  }
   const input = toEngineInput(state);
   if (input === null) {
     return { kind: "waiting", message: "Seat at least two players to calculate." };

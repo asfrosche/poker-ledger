@@ -25,10 +25,10 @@ import { CardPicker } from "./card-picker";
 import { EquityPanel } from "./equity-panel";
 import { OutsChip } from "./outs-chip";
 import { useTableEquity } from "./use-table-equity";
-import { setVariant, toEngineInput } from "@/lib/hand-table/table-state";
+import { setVariant, sharedPrefix, toEngineInput } from "@/lib/hand-table/table-state";
 import { VARIANT_LABELS } from "@/lib/hand-table/variant";
 import { outsForSeats } from "@/lib/hand-table/outs";
-import { PokerTable } from "./poker-table";
+import { PokerTable, RunoutList } from "./poker-table";
 import { SeatRoster } from "./seat-roster";
 
 const RUN_OPTIONS: { count: RunCount; label: string; short: string }[] = [
@@ -110,12 +110,15 @@ export function HandCalculatorView() {
   }
 
   const runCount = table.runCount;
+  // Runouts are only offered once the flop is down. Stays visible while runs are set, so it can be turned back to Run once.
+  const showRunout = sharedPrefix(table) >= 3 || table.runCount > 1;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeading
         eyebrow="Tools"
         title="Hand calculator"
+        keepRow
         actions={
           <button
             type="button"
@@ -155,7 +158,7 @@ export function HandCalculatorView() {
             </div>
           </section>
 
-          <section aria-labelledby="runout-heading" className="panel flex flex-col gap-3 p-3 sm:p-4">
+          <section aria-labelledby="runout-heading" className={clsx("panel flex flex-col gap-3 p-3 sm:p-4", !showRunout && "hidden")}>
             <h2 id="runout-heading" className="label">
               Runout
             </h2>
@@ -182,9 +185,7 @@ export function HandCalculatorView() {
             </div>
           </section>
 
-          <div className="flex justify-end">
-            <OutsChip state={table} equity={equity} seatName={seatName} />
-          </div>
+          <EquityPanel state={table} seatName={seatName} equity={equity} />
 
           <PokerTable
             state={table}
@@ -194,7 +195,16 @@ export function HandCalculatorView() {
             onClear={(target: Target) => setTable((t) => clearTarget(t, target))}
           />
 
-          <EquityPanel state={table} seatName={seatName} equity={equity} />
+          <RunoutList
+            state={table}
+            active={table.active}
+            onSelect={selectSlot}
+            onClear={(target: Target) => setTable((t) => clearTarget(t, target))}
+          />
+
+          <div className="flex justify-end">
+            <OutsChip state={table} equity={equity} seatName={seatName} />
+          </div>
 
         </div>
 

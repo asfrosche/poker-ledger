@@ -5,6 +5,7 @@ import {
 import { computeTransfers } from "@/lib/calculations/settlement";
 import { applyAdjustment, computeAdjustment } from "@/lib/calculations/adjustment";
 import type { AdjustmentMethod, GameVariant } from "@/types";
+import { normalizeVariants } from "@/lib/game-variants";
 import type {
   AuditEntry,
   BuyIn,
@@ -33,9 +34,8 @@ export type GameConfigPatch = Partial<
     | "buyInPaise"
     | "chipsPerBuyIn"
     | "venue"
-    | "format"
     | "notes"
-    | "variant"
+    | "variants"
     | "smallBlindPaise"
     | "bigBlindPaise"
   >
@@ -54,9 +54,8 @@ export type LedgerAction = ActionBase &
         buyInPaise: number;
         chipsPerBuyIn: number;
         venue: string;
-        format: string;
         notes: string;
-        variant?: GameVariant;
+        variants?: GameVariant[];
         smallBlindPaise?: number | null;
         bigBlindPaise?: number | null;
         isSample?: boolean;
@@ -181,9 +180,10 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
         buyInPaise: action.buyInPaise,
         chipsPerBuyIn: action.chipsPerBuyIn,
         venue: action.venue,
-        format: action.format,
+        // Format was replaced by variants. Kept as an empty string so older saved data stays valid.
+        format: "",
         notes: action.notes,
-        variant: action.variant ?? "nlh",
+        variants: normalizeVariants(action.variants),
         smallBlindPaise,
         bigBlindPaise,
         status: "open",
@@ -207,7 +207,13 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
         const big = patch.bigBlindPaise !== undefined ? patch.bigBlindPaise : game.bigBlindPaise;
         if (!isValidBlinds(small, big)) return state;
       }
-      const updated = { ...game, ...patch, name: (patch.name ?? game.name).trim() };
+      if (patch.variants !== undefined && patch.variants.length === 0) return state;
+      const updated = {
+        ...game,
+        ...patch,
+        variants: patch.variants ? normalizeVariants(patch.variants) : game.variants,
+        name: (patch.name ?? game.name).trim(),
+      };
       return withAudit(
         replaceGame(state, updated),
         action,

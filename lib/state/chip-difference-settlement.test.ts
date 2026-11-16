@@ -29,7 +29,6 @@ function mismatchedGame(finals: [number, number, number] = [1200, 900, 800]) {
       buyInPaise: 50000,
       chipsPerBuyIn: 1000,
       venue: "",
-      format: "",
       notes: "",
       isSample: false,
     },

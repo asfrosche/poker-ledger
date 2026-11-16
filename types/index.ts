@@ -43,8 +43,8 @@ export interface Game {
   /** YYYY-MM-DD */
   date: string;
   currency: string;
-  /** Game variant. Older games default to No-Limit Hold'em. */
-  variant: GameVariant;
+  /** Game variants in play, in order. A mixed game lists several. Older games default to No-Limit Hold'em. */
+  variants: GameVariant[];
   /** Blinds in paise, or null when not recorded (older games). */
   smallBlindPaise: number | null;
   bigBlindPaise: number | null;

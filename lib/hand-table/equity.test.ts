@@ -43,7 +43,12 @@ describe("equityStatus", () => {
     expect(equityStatus(s).kind).toBe("ready");
   });
 
-  it("calculates for a named player who has no cards yet, with their cards hidden", () => {
+  it("shows no probabilities when nobody has a hole card", () => {
+    const s = addSeat(addSeat(createTableState(), "a", "p1"), "b", "p2");
+    expect(equityStatus(s)).toMatchObject({ kind: "waiting", message: "Deal at least one hole card to see probabilities." });
+  });
+
+  it("calculates for a named player who has no cards yet, once someone has a card", () => {
     let s = addSeat(addSeat(createTableState(), "a", null), "b", "p2");
     s = selectTarget(s, { kind: "hole", seatId: "a", index: 0 });
     s = placeCard(s, c("Ah"));

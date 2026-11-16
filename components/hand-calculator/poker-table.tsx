@@ -1,6 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
+import type { CSSProperties } from "react";
 import { CardFace } from "./card-face";
 import { isSelectable, readTarget, runBoard, sameTarget, sharedPrefix, type Seat, type TableState, type Target } from "@/lib/hand-table/table-state";
 import { streetLabel } from "@/lib/hand-table/labels";
@@ -28,7 +29,7 @@ export function PokerTable({ state, seatName, onSelect, onClear, outs }: Props) 
   const active = state.active;
 
   return (
-    <div className="relative mx-auto aspect-[5/6] w-full max-w-[46rem] [--rx:37%] [--ry:35%] sm:aspect-[16/10] sm:[--rx:39%] sm:[--ry:37%]">
+    <div className="relative mx-auto aspect-[1.7/1] w-full max-w-[46rem] [container-type:size] [--rx:calc(50cqw_-_28px)] [--ry:calc(50cqh_-_28px)] sm:aspect-[16/10] sm:[--rx:39%] sm:[--ry:37%]">
       {/* Wooden rail and green felt */}
       <div
         className="absolute inset-0 rounded-[50%] transition-[background-color,box-shadow] duration-300"
@@ -57,7 +58,7 @@ export function PokerTable({ state, seatName, onSelect, onClear, outs }: Props) 
       {/* Centre: one shared board, or one stacked board per runout */}
       {state.runCount === 1 ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3" role="group" aria-label="Shared board">
-          <div className="flex items-end gap-1.5 sm:gap-2.5">
+          <div className="flex items-end gap-1 sm:gap-2.5">
             {[0, 1, 2].map((index) => (
               <BoardSlot key={index} state={state} index={index} active={active} onSelect={onSelect} onClear={onClear} />
             ))}
@@ -66,12 +67,14 @@ export function PokerTable({ state, seatName, onSelect, onClear, outs }: Props) 
               <BoardSlot key={index} state={state} index={index} active={active} onSelect={onSelect} onClear={onClear} />
             ))}
           </div>
-          <p className="max-w-[16rem] text-center font-mono text-[10px] uppercase leading-snug tracking-[0.12em]" style={{ color: "var(--table-text)" }}>
+          <p className="hidden max-w-[16rem] text-center font-mono text-[10px] uppercase leading-snug tracking-[0.12em] sm:block" style={{ color: "var(--table-text)" }}>
             Flop · Turn · River
           </p>
         </div>
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-3 sm:gap-2" role="group" aria-label="Runout boards">
+        // Phones: the felt keeps only the shared board, and each runout is listed under the table (see RunoutList).
+        // Desktop: the runouts sit on the felt.
+        <div className="absolute inset-0 hidden flex-col items-center justify-center gap-1.5 px-3 sm:flex sm:gap-2" role="group" aria-label="Runout boards">
           {prefix >= 3 ? (
             <FlopWithRuns state={state} active={active} onSelect={onSelect} onClear={onClear} />
           ) : (
@@ -91,9 +94,17 @@ export function PokerTable({ state, seatName, onSelect, onClear, outs }: Props) 
         </div>
       )}
 
-      {/* Seats */}
+      {/* Phones, several runouts: the shared board alone in the centre. */}
+      {state.runCount > 1 ? (
+        <div className="absolute inset-0 flex items-center justify-center sm:hidden" role="group" aria-label="Shared board">
+          <SharedRow state={state} active={active} onSelect={onSelect} onClear={onClear} />
+        </div>
+      ) : null}
+
+      {/* Seats. Four players sit on the diagonals so no seat lands on the board's centre line. */}
       {state.seats.map((seat, i) => {
-        const angle = Math.PI / 2 + (i * 2 * Math.PI) / count;
+        const offset = count === 4 ? Math.PI / 4 : 0;
+        const angle = Math.PI / 2 + offset + (i * 2 * Math.PI) / count;
         const owns = active !== null && active.kind === "hole" && active.seatId === seat.id;
         return (
           <SeatView
@@ -103,6 +114,7 @@ export function PokerTable({ state, seatName, onSelect, onClear, outs }: Props) 
             number={i + 1}
             cos={Math.cos(angle)}
             sin={Math.sin(angle)}
+            phone={phoneSlot(count, i)}
             owns={owns}
             active={active}
             onSelect={onSelect}
@@ -142,6 +154,31 @@ function StreetHeader() {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Phones, several runouts: each run as a labelled row under the table (R1, R2, R3), so the boards never
+ * crowd the seats. Shared cards are already on the felt, so each row shows only that run's own cards.
+ */
+export function RunoutList({
+  state,
+  active,
+  onSelect,
+  onClear,
+}: {
+  state: TableState;
+  active: Target | null;
+  onSelect: (target: Target) => void;
+  onClear: (target: Target) => void;
+}) {
+  if (state.runCount === 1) return null;
+  return (
+    <div className="flex flex-col gap-2 sm:hidden" role="group" aria-label="Runout boards">
+      {Array.from({ length: state.runCount }, (_, run) => (
+        <RunRow key={run} state={state} run={run} active={active} onSelect={onSelect} onClear={onClear} />
+      ))}
     </div>
   );
 }
@@ -342,7 +379,8 @@ function BoardSlot({
   const selectable = isSelectable(state, target);
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="font-mono text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--table-text)" }}>{streetLabel(index)}</span>
+      {/* Street labels are hidden on phones, where the seats need the vertical room. */}
+      <span className="hidden font-mono text-[9px] uppercase tracking-[0.1em] sm:inline" style={{ color: "var(--table-text)" }}>{streetLabel(index)}</span>
       <CardFace
         size="md"
         card={card}
@@ -368,6 +406,7 @@ function SeatView({
   outs,
   multiRun,
   holeCount,
+  phone,
 }: {
   seat: Seat;
   label: string;
@@ -381,27 +420,46 @@ function SeatView({
   outs?: SeatOuts;
   multiRun: boolean;
   holeCount: number;
+  /** Phone position as [x, y] in -1..1 along the felt's edges. Null for tables with more than five seats. */
+  phone: [number, number] | null;
 }) {
   const seated = seat.playerId !== null;
+  // One-line summary for phones: "Ahead", or the outs on the next card (summed over runouts).
+  const outsSummary =
+    outs && outs.length > 0
+      ? outs.every((e) => e.ahead)
+        ? "Ahead"
+        : `${outs.reduce((sum, e) => sum + e.cards.length, 0)} outs`
+      : null;
   return (
     <div
-      className="absolute flex flex-col items-center gap-1"
-      style={{
-        left: `calc(50% + var(--rx) * ${cos.toFixed(4)})`,
-        top: `calc(50% + var(--ry) * ${sin.toFixed(4)})`,
-        transform: "translate(-50%, -50%)",
-      }}
+      // Phones place seats along the felt's edge (see phoneSlot); desktop keeps the oval.
+      className="absolute flex flex-col items-center gap-1 [--sx:var(--sx-phone)] [--sy:var(--sy-phone)] sm:[--sx:var(--sx-desk)] sm:[--sy:var(--sy-desk)]"
+      style={
+        {
+          left: "calc(50% + var(--sx))",
+          top: "calc(50% + var(--sy))",
+          transform: "translate(-50%, -50%)",
+          "--sx-phone": phone ? `calc(${phone[0]} * ${phoneInsetX(phone)} * (47.8cqw - 26px))` : `calc(var(--rx) * ${cos.toFixed(4)})`,
+          "--sy-phone": phone ? `calc(${phone[1]} * ${phoneInsetY(phone)} * (47.8cqh - 27px))` : `calc(var(--ry) * ${sin.toFixed(4)})`,
+          "--sx-desk": `calc(var(--rx) * ${cos.toFixed(4)})`,
+          "--sy-desk": `calc(var(--ry) * ${sin.toFixed(4)})`,
+        } as CSSProperties
+      }
       data-seat={number}
     >
       <span
         className={clsx(
-          "max-w-[5.5rem] truncate rounded-full px-2 py-0.5 text-[11px] font-medium leading-tight sm:text-xs",
+          // Names are never cut off: the seat grows to fit the whole name.
+          "whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium leading-tight sm:text-xs",
           seated ? "bg-black/45 text-white" : "bg-black/25 text-white/60",
           owns && "ring-2 ring-accent",
         )}
         title={label}
       >
         {label}
+        {/* Phones: the outs summary goes in the name, so the seat stays compact. Full cards are in the outs card. */}
+        {outsSummary ? <span className="sm:hidden"> · {outsSummary}</span> : null}
       </span>
       <div className={clsx("flex gap-1 rounded-[10px] p-0.5", owns && "bg-accent/15")}>
         {Array.from({ length: holeCount }, (_, index) => {
@@ -410,7 +468,7 @@ function SeatView({
           return (
             <CardFace
               key={index}
-              size="sm"
+              size="seat"
               card={card}
               label={`${label}, hole card ${index + 1}${card === null ? ", empty" : ""}`}
               selected={sameTarget(active, target)}
@@ -420,12 +478,46 @@ function SeatView({
           );
         })}
       </div>
-      {outs && outs.length > 0 ? <SeatOutsBox entries={outs} multiRun={multiRun} /> : null}
+      {outs && outs.length > 0 ? (
+        <div className="hidden sm:block">
+          <SeatOutsBox entries={outs} multiRun={multiRun} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
 const MAX_MINI_CARDS = 5;
+
+/**
+ * Phone seat positions: each seat sits along the felt's edge, away from the board in the middle.
+ * [x, y] runs from -1 to 1 across the felt. Two players keep the top and bottom.
+ * Above five seats there isn't room along the edge, so those tables use the oval.
+ */
+const PHONE_SLOTS: Record<number, [number, number][]> = {
+  2: [[0, -1], [0, 1]],
+  3: [[-1, -1], [1, -1], [0, 1]],
+  4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+  // Five: two across the top, three along the bottom (the bottom centre seat sits between the corners).
+  5: [[-1, -1], [1, -1], [-1, 1], [0, 1], [1, 1]],
+};
+
+function phoneSlot(count: number, index: number): [number, number] | null {
+  return PHONE_SLOTS[count]?.[index] ?? null;
+}
+
+/*
+ * Inset factors for phone seats, as a share of the felt's half-size. Seats sit close to the inner rail with a
+ * small safety margin: side seats use 0.96 across, top and bottom seats 0.92 down, and corners 0.94 down.
+ */
+function phoneInsetX([x]: [number, number]): number {
+  return x === 0 ? 0 : 0.96;
+}
+
+function phoneInsetY([x, y]: [number, number]): number {
+  if (y === 0) return 0;
+  return x === 0 ? 0.92 : 0.94;
+}
 
 /** A small box under a seat listing that player's outs as mini cards. Shows "Ahead" when they lead. */
 function SeatOutsBox({ entries, multiRun }: { entries: SeatOuts; multiRun: boolean }) {

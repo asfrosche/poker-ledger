@@ -4,12 +4,42 @@ import { clsx } from "clsx";
 import { X } from "lucide-react";
 import { RANK_NAMES, SUIT_SYMBOLS, cardRank, cardSuit, type Card } from "@/lib/poker/cards";
 
-export type CardSize = "xs" | "sm" | "md";
+export type CardSize = "seat" | "xs" | "sm" | "md";
 
-const SIZE: Record<CardSize, { box: string; rank: string; suit: string; corner: string }> = {
-  xs: { box: "h-[30px] w-[22px]", rank: "text-[8px]", suit: "text-[10px]", corner: "text-[6px]" },
-  sm: { box: "h-[42px] w-[30px] sm:h-[50px] sm:w-[36px]", rank: "text-[11px] sm:text-xs", suit: "text-base sm:text-lg", corner: "text-[8px] sm:text-[9px]" },
-  md: { box: "h-[54px] w-[38px] sm:h-[68px] sm:w-[48px]", rank: "text-sm sm:text-base", suit: "text-xl sm:text-2xl", corner: "text-[9px] sm:text-[10px]" },
+/**
+ * Card sizes. Each card shows its rank once, in the top-left corner, and a large suit in the middle.
+ * `clear` sizes the remove button to the card, and it sits in the bottom-right corner, which is always empty.
+ */
+const SIZE: Record<CardSize, { box: string; corner: string; suit: string; clear: string; clearIcon: string }> = {
+  // Player seats: small on phones so the seat fits the flat table, the usual size on desktop.
+  seat: {
+    box: "h-[30px] w-[22px] sm:h-[50px] sm:w-[36px]",
+    corner: "text-[7px] sm:text-[10px]",
+    suit: "text-[12px] sm:text-lg",
+    clear: "size-4 -right-2 -bottom-2 sm:size-5 sm:-right-2.5 sm:-bottom-2.5",
+    clearIcon: "size-2.5 sm:size-3",
+  },
+  xs: {
+    box: "h-[30px] w-[22px] sm:h-[42px] sm:w-[30px]",
+    corner: "text-[7px] sm:text-[9px]",
+    suit: "text-[12px] sm:text-base",
+    clear: "size-4 -right-2 -bottom-2",
+    clearIcon: "size-2.5",
+  },
+  sm: {
+    box: "h-[42px] w-[30px] sm:h-[50px] sm:w-[36px]",
+    corner: "text-[9px] sm:text-[10px]",
+    suit: "text-base sm:text-lg",
+    clear: "size-5 -right-2.5 -bottom-2.5",
+    clearIcon: "size-3",
+  },
+  md: {
+    box: "h-[40px] w-[28px] sm:h-[68px] sm:w-[48px]",
+    corner: "text-[9px] sm:text-[11px]",
+    suit: "text-lg sm:text-2xl",
+    clear: "size-5 -right-2.5 -bottom-2.5",
+    clearIcon: "size-3",
+  },
 };
 
 export function isRedSuit(suit: number): boolean {
@@ -40,7 +70,7 @@ export function CardFace({
   const inner = (
     <span
       className={clsx(
-        "relative flex shrink-0 flex-col items-center justify-center rounded-[7px] border font-mono leading-none transition-all",
+        "relative flex shrink-0 items-center justify-center rounded-[7px] border font-mono leading-none transition-all",
         s.box,
         card === null && "border-dashed border-white/40 bg-white/5 text-white/50",
         card !== null && "border-black/15 bg-[#fdfcf8] shadow-[0_1px_2px_rgba(0,0,0,0.25)]",
@@ -53,12 +83,11 @@ export function CardFace({
         <span aria-hidden className="text-lg">+</span>
       ) : (
         <>
+          {/* The one and only rank on the card: top-left corner. */}
           <span className={clsx("absolute left-1 top-0.5 font-semibold", s.corner)} aria-hidden>
             {RANK_NAMES[cardRank(card) - 2]}
           </span>
-          <span className={clsx("font-semibold", s.rank)} aria-hidden>
-            {RANK_NAMES[cardRank(card) - 2]}
-          </span>
+          {/* Large centred suit. */}
           <span className={s.suit} aria-hidden>
             {SUIT_SYMBOLS[cardSuit(card)]}
           </span>
@@ -94,9 +123,14 @@ export function CardFace({
             onClear();
           }}
           aria-label={`Clear ${label}`}
-          className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full border border-black/20 bg-[#fdfcf8] text-[#1d1d1b] shadow-sm hover:bg-accent-soft"
+          className={clsx(
+            "absolute z-10 flex items-center justify-center rounded-full border border-black/20 bg-[#fdfcf8] text-[#1d1d1b] shadow-sm hover:bg-accent-soft",
+            // Invisible enlarged tap area, so the visible button stays small but the target is about 44px.
+            "before:absolute before:-inset-3.5 before:content-['']",
+            s.clear,
+          )}
         >
-          <X className="size-3" aria-hidden />
+          <X className={s.clearIcon} aria-hidden />
         </button>
       ) : null}
     </span>
