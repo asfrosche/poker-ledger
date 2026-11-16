@@ -71,6 +71,7 @@ export type LedgerAction = ActionBase &
         upiRef: string;
         note: string;
       }
+    | { type: "player/create"; playerId: string; name: string }
     | { type: "data/clear-samples" }
     | { type: "data/reset" }
   );
@@ -208,6 +209,15 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
         selectedGameId: state.selectedGameId === game.id ? null : state.selectedGameId,
       };
       return withAudit(next, action, null, `Game #${game.number} deleted: ${game.name}`);
+    }
+
+    case "player/create": {
+      // Creates a reusable player profile without joining a game. Names are unique (case-insensitive).
+      const name = action.name.trim();
+      if (!name || !action.playerId) return state;
+      if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return state;
+      const player: Player = { id: action.playerId, name, isSample: false, createdAt: action.at };
+      return withAudit({ ...state, players: [...state.players, player] }, action, null, `${name} added as a player`);
     }
 
     case "gameplayer/add": {
