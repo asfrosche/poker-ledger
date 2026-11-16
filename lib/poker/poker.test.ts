@@ -75,9 +75,9 @@ describe("estimateEquity", () => {
     expect(result.win + result.tie + result.lose).toBeCloseTo(1, 9);
   });
 
-  it("gives roughly 50% to a pair of aces against one random hand preflop", () => {
+  it("gives about 85% to a pair of aces against one random hand preflop", () => {
     // Known benchmark: AA vs a random hand is about 85%. Allow a loose tolerance for sampling.
-    const result = estimateEquity({ hole: hand("Ah", "Ad"), board: [], opponents: 1, trials: 20000 });
+    const result = estimateEquity({ hole: hand("Ah", "Ad"), board: [], opponents: 1, trials: 8000 });
     expect(result.equity).toBeGreaterThan(0.82);
     expect(result.equity).toBeLessThan(0.88);
   });

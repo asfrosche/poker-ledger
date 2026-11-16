@@ -22,8 +22,13 @@ import {
 } from "@/lib/hand-table/table-state";
 import type { Card } from "@/lib/poker/cards";
 import { CardPicker } from "./card-picker";
+import { EquityPanel } from "./equity-panel";
+import { OutsChip } from "./outs-chip";
+import { useTableEquity } from "./use-table-equity";
+import { setVariant, toEngineInput } from "@/lib/hand-table/table-state";
+import { VARIANT_LABELS } from "@/lib/hand-table/variant";
+import { outsForSeats } from "@/lib/hand-table/outs";
 import { PokerTable } from "./poker-table";
-import { RunoutBoards } from "./runout-boards";
 import { SeatRoster } from "./seat-roster";
 
 const RUN_OPTIONS: { count: RunCount; label: string; short: string }[] = [
@@ -40,7 +45,14 @@ function newId(): string {
 export function HandCalculatorView() {
   const { state: ledger, dispatch } = useLedger();
   const players = ledger.players;
-  const [draft, setTable] = useState(createTableState);
+  // Start with two seats filled from the shared player list. Missing players leave the seat empty,
+  // and any seat can be reassigned later. Nothing new is written to the ledger.
+  const [draft, setTable] = useState(() => {
+    let t = createTableState();
+    const starting = players.slice(0, 2);
+    for (let i = 0; i < 2; i++) t = addSeat(t, newId(), starting[i]?.id ?? null);
+    return t;
+  });
 
   // Players can be removed elsewhere in the app. Any seat pointing at a missing player is shown empty,
   // derived at render time so no effect has to write state back.
@@ -59,6 +71,21 @@ export function HandCalculatorView() {
     const seat = table.seats.find((s) => s.id === seatId);
     return seat ? seatName(seat) : "Seat";
   };
+
+  const [pickerOpen, setPickerOpen] = useState(true);
+  // One calculation shared by the outs card and the equity panel.
+  const equity = useTableEquity(table);
+  // Outs for every seated player, shown in a box beside each seat.
+  const seatOuts = useMemo(() => {
+    const input = toEngineInput(table);
+    return input ? outsForSeats(input) : undefined;
+  }, [table]);
+
+  // Tapping a slot opens the picker, so the cards are one tap away.
+  function selectSlot(target: Target) {
+    setPickerOpen(true);
+    setTable((t) => selectTarget(t, target));
+  }
 
   function addSeatFor(playerId: string | null) {
     const seatId = newId();
@@ -102,6 +129,32 @@ export function HandCalculatorView() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
         <div className="flex min-w-0 flex-col gap-6">
+          <section aria-labelledby="game-heading" className="panel flex flex-col gap-3 p-3 sm:p-4">
+            <h2 id="game-heading" className="label">
+              Game
+            </h2>
+            <div role="radiogroup" aria-label="Game" className="grid grid-cols-2 gap-1 rounded-[12px] border border-line bg-surface p-1">
+              {(["holdem", "omaha"] as const).map((variant) => {
+                const checked = table.variant === variant;
+                return (
+                  <button
+                    key={variant}
+                    type="button"
+                    role="radio"
+                    aria-checked={checked}
+                    onClick={() => setTable((t) => setVariant(t, variant))}
+                    className={clsx(
+                      "h-10 rounded-[9px] text-sm font-medium transition-colors",
+                      checked ? "bg-panel text-ink shadow-[0_1px_2px_rgba(41,42,39,0.12)]" : "text-muted hover:text-ink",
+                    )}
+                  >
+                    {VARIANT_LABELS[variant]}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           <section aria-labelledby="runout-heading" className="panel flex flex-col gap-3 p-3 sm:p-4">
             <h2 id="runout-heading" className="label">
               Runout
@@ -129,22 +182,30 @@ export function HandCalculatorView() {
             </div>
           </section>
 
+          <div className="flex justify-end">
+            <OutsChip state={table} equity={equity} seatName={seatName} />
+          </div>
+
           <PokerTable
             state={table}
+            outs={seatOuts}
             seatName={seatName}
-            onSelect={(target: Target) => setTable((t) => selectTarget(t, target))}
+            onSelect={selectSlot}
             onClear={(target: Target) => setTable((t) => clearTarget(t, target))}
           />
 
-          <RunoutBoards
-            state={table}
-            onSelect={(target: Target) => setTable((t) => selectTarget(t, target))}
-            onClear={(target: Target) => setTable((t) => clearTarget(t, target))}
-          />
+          <EquityPanel state={table} seatName={seatName} equity={equity} />
+
         </div>
 
         <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24">
-          <CardPicker state={table} seatLabel={seatLabel} onPick={(card: Card) => setTable((t) => placeCard(t, card))} />
+          <CardPicker
+            state={table}
+            seatLabel={seatLabel}
+            onPick={(card: Card) => setTable((t) => placeCard(t, card))}
+            open={pickerOpen}
+            onToggle={() => setPickerOpen((open) => !open)}
+          />
 
           <SeatRoster
             state={table}

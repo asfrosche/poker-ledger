@@ -4,9 +4,10 @@ import { clsx } from "clsx";
 import { X } from "lucide-react";
 import { RANK_NAMES, SUIT_SYMBOLS, cardRank, cardSuit, type Card } from "@/lib/poker/cards";
 
-export type CardSize = "sm" | "md";
+export type CardSize = "xs" | "sm" | "md";
 
 const SIZE: Record<CardSize, { box: string; rank: string; suit: string; corner: string }> = {
+  xs: { box: "h-[30px] w-[22px]", rank: "text-[8px]", suit: "text-[10px]", corner: "text-[6px]" },
   sm: { box: "h-[42px] w-[30px] sm:h-[50px] sm:w-[36px]", rank: "text-[11px] sm:text-xs", suit: "text-base sm:text-lg", corner: "text-[8px] sm:text-[9px]" },
   md: { box: "h-[54px] w-[38px] sm:h-[68px] sm:w-[48px]", rank: "text-sm sm:text-base", suit: "text-xl sm:text-2xl", corner: "text-[9px] sm:text-[10px]" },
 };

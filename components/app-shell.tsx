@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Handshake, History, LayoutGrid, Plus, Settings as SettingsIcon } from "lucide-react";
+import { Calculator, Handshake, History, LayoutGrid, Plus, Settings as SettingsIcon } from "lucide-react";
 import { clsx } from "clsx";
 import { useLedger } from "@/lib/state/ledger-context";
 import { StatusPill } from "@/components/ui/primitives";
@@ -12,6 +12,7 @@ const NAV = [
   { href: "/chip-board", label: "Chips", icon: LayoutGrid },
   { href: "/settlement", label: "Settle", icon: Handshake },
   { href: "/history", label: "History", icon: History },
+  { href: "/hand-calculator", label: "Calculator", icon: Calculator },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
@@ -77,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
         <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-panel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:static sm:border-t-0 sm:bg-transparent sm:backdrop-blur-none sm:pb-0">
-          <ul className="mx-auto grid max-w-6xl grid-cols-4 gap-1 px-2 sm:flex sm:px-6 sm:pb-3 sm:gap-2">
+          <ul className="mx-auto grid max-w-6xl grid-cols-5 gap-1 px-2 sm:flex sm:px-6 sm:pb-3 sm:gap-2">
             {NAV.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(`${href}/`);
               return (

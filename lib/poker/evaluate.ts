@@ -22,7 +22,7 @@ const CATEGORY_WEIGHT = BASE ** 5;
 export type HandScore = number;
 
 /** Score a five-card hand. */
-function scoreFive(cards: readonly Card[]): HandScore {
+export function scoreFive(cards: readonly Card[]): HandScore {
   const ranks = cards.map(cardRank).sort((a, b) => b - a);
   const flush = cards.every((c) => cardSuit(c) === cardSuit(cards[0]));
 
@@ -71,6 +71,33 @@ export function evaluateBest(cards: readonly Card[]): HandScore {
     for (let i = 0; i < n; i++) if (mask & (1 << i)) pick.push(cards[i]);
     const score = scoreFive(pick);
     if (score > best) best = score;
+  }
+  return best;
+}
+
+/**
+ * Best Omaha hand: exactly two hole cards plus exactly three board cards.
+ * Tries every pair of hole cards with every three board cards.
+ */
+export function evaluateOmaha(hole: readonly Card[], board: readonly Card[]): HandScore {
+  if (hole.length !== 4) throw new RangeError(`Omaha needs 4 hole cards, got ${hole.length}`);
+  if (board.length < 3) throw new RangeError(`Omaha needs at least 3 board cards, got ${board.length}`);
+
+  let best = -1;
+  const five: Card[] = [];
+  for (let a = 0; a < 4; a++) {
+    for (let b = a + 1; b < 4; b++) {
+      for (let x = 0; x < board.length; x++) {
+        for (let y = x + 1; y < board.length; y++) {
+          for (let z = y + 1; z < board.length; z++) {
+            five.length = 0;
+            five.push(hole[a], hole[b], board[x], board[y], board[z]);
+            const score = scoreFive(five);
+            if (score > best) best = score;
+          }
+        }
+      }
+    }
   }
   return best;
 }

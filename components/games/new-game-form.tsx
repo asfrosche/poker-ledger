@@ -6,6 +6,7 @@ import { PageHeading, Panel } from "@/components/ui/primitives";
 import { useLedger } from "@/lib/state/ledger-context";
 import { useToast } from "@/components/ui/toast";
 import { todayIsoDate } from "@/lib/format";
+import { defaultGameName } from "@/lib/game-name";
 
 export function NewGameForm() {
   const { state, dispatch } = useLedger();
@@ -25,7 +26,7 @@ export function NewGameForm() {
         </p>
         <GameConfigForm
           initial={{
-            name: "Friday Poker Night",
+            name: defaultGameName(new Date()),
             date: todayIsoDate(),
             currency: s.defaultCurrency,
             buyInPaise: s.defaultBuyInPaise,

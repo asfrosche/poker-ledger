@@ -15,6 +15,16 @@
   --loss-soft: #f8e7e3;
   --warn: #9a6a00;
   --warn-soft: #f7efdc;
+
+  /* Poker table, light mode: soft felt, thin warm walnut rail, subtle depth. */
+  --table-felt: #3e8a62;
+  --table-felt-cover: 1;
+  --table-inset: 2.2%;
+  --table-rail: #d2c3a8;
+  --table-rail-shadow: inset 0 0 0 1px rgba(92, 70, 40, 0.28), 0 2px 8px rgba(41, 42, 39, 0.08);
+  --table-line: rgba(255, 255, 255, 0.22);
+  --table-text: rgba(255, 255, 255, 0.92);
+  --table-vignette: inset 0 0 28px rgba(20, 60, 36, 0.16);
 }
 
 /* Night mode. Set by the theme script in app/layout.tsx and the header toggle. */
@@ -33,6 +43,16 @@
   --loss-soft: #3a221e;
   --warn: #e8b451;
   --warn-soft: #3a2f18;
+
+  /* Poker table, dark mode: the original deep green felt, dark wood rail and heavier shadow. */
+  --table-felt: #21643f;
+  --table-felt-cover: 0;
+  --table-inset: 3.5%;
+  --table-rail: #4b2e1a;
+  --table-rail-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06), 0 18px 40px rgba(41, 42, 39, 0.28);
+  --table-line: rgba(255, 255, 255, 0.12);
+  --table-text: rgba(255, 255, 255, 0.6);
+  --table-vignette: inset 0 0 36px rgba(0, 0, 0, 0.38);
 }
 
 @theme inline {

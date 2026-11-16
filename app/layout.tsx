@@ -24,7 +24,8 @@ const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("poker-ledger-t
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable} h-full antialiased`}>
+    // suppressHydrationWarning: the theme script sets data-theme on <html> before React hydrates.
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <ToastProvider>

@@ -2,28 +2,33 @@
 // The evaluation engine will read the table only through `toEngineInput`.
 
 import type { Card } from "@/lib/poker/cards";
+import { HOLE_COUNT, type Variant } from "./variant";
 
 export const MAX_SEATS = 9;
 export const BOARD_SIZE = 5;
 export const MAX_RUNS = 3;
+/** Most hole cards any variant deals. Texas Hold'em uses the first two. */
+export const MAX_HOLE = 4;
 export type RunCount = 1 | 2 | 3;
 
 /** One seat at the table. `playerId` points at a record in the shared ledger `players` list. */
 export type Seat = {
   id: string;
   playerId: string | null;
-  hole: [Card | null, Card | null];
+  /** Always MAX_HOLE slots. The variant decides how many are in play. */
+  hole: (Card | null)[];
 };
 
 /** Something the user can place a card into. */
 export type Target =
-  | { kind: "hole"; seatId: string; index: 0 | 1 }
+  | { kind: "hole"; seatId: string; index: number }
   | { kind: "board"; index: number }
   | { kind: "run"; run: number; index: number };
 
 export type Slot = Card | null;
 
 export type TableState = {
+  variant: Variant;
   seats: Seat[];
   runCount: RunCount;
   /**
@@ -39,8 +44,9 @@ export type TableState = {
   active: Target | null;
 };
 
-export function createTableState(): TableState {
+export function createTableState(variant: Variant = "holdem"): TableState {
   return {
+    variant,
     seats: [],
     runCount: 1,
     board: emptyBoard(),
@@ -51,6 +57,10 @@ export function createTableState(): TableState {
 
 function emptyBoard(): Slot[] {
   return Array<Slot>(BOARD_SIZE).fill(null);
+}
+
+function emptyHole(): Slot[] {
+  return Array<Slot>(MAX_HOLE).fill(null);
 }
 
 export function sameTarget(a: Target | null, b: Target | null): boolean {
@@ -92,7 +102,8 @@ export function readTarget(state: TableState, target: Target): Slot {
 /** A target can take a card if it is filled (replace) or the card before it is filled (no gaps). */
 export function isSelectable(state: TableState, target: Target): boolean {
   if (target.kind === "hole") {
-    return state.seats.some((s) => s.id === target.seatId);
+    const inPlay = target.index >= 0 && target.index < HOLE_COUNT[state.variant];
+    return inPlay && state.seats.some((s) => s.id === target.seatId);
   }
   if (target.kind === "board") {
     if (target.index < 0 || target.index >= BOARD_SIZE) return false;
@@ -109,8 +120,9 @@ export function isSelectable(state: TableState, target: Target): boolean {
 /** Every target in display order: seat hole cards, then the board, then each runout's own cards. */
 export function targetsInOrder(state: TableState): Target[] {
   const targets: Target[] = [];
+  const holeCount = HOLE_COUNT[state.variant];
   for (const seat of state.seats) {
-    targets.push({ kind: "hole", seatId: seat.id, index: 0 }, { kind: "hole", seatId: seat.id, index: 1 });
+    for (let index = 0; index < holeCount; index++) targets.push({ kind: "hole", seatId: seat.id, index });
   }
   for (let index = 0; index < BOARD_SIZE; index++) targets.push({ kind: "board", index });
   if (state.runCount > 1) {
@@ -151,13 +163,29 @@ function normalize(state: TableState): TableState {
   return state;
 }
 
+// ---- Game variant ----------------------------------------------------------
+
+/**
+ * Switches between Texas Hold'em and Omaha. Going to Texas Hold'em clears the third and fourth hole cards,
+ * which are no longer dealt. Going to Omaha keeps everything, and the new slots start empty.
+ */
+export function setVariant(state: TableState, variant: Variant): TableState {
+  if (variant === state.variant) return state;
+  let next: TableState = { ...state, variant };
+  if (variant === "holdem") {
+    const seats = next.seats.map((s) => ({ ...s, hole: s.hole.map((c, i) => (i < HOLE_COUNT.holdem ? c : null)) }));
+    next = { ...next, seats };
+  }
+  return normalize(next);
+}
+
 // ---- Seats and players -----------------------------------------------------
 
 export function addSeat(state: TableState, seatId: string, playerId: string | null): TableState {
   if (state.seats.length >= MAX_SEATS) return state;
   if (state.seats.some((s) => s.id === seatId)) return state;
   if (playerId !== null && state.seats.some((s) => s.playerId === playerId)) return state;
-  return { ...state, seats: [...state.seats, { id: seatId, playerId, hole: [null, null] }] };
+  return { ...state, seats: [...state.seats, { id: seatId, playerId, hole: emptyHole() }] };
 }
 
 export function removeSeat(state: TableState, seatId: string): TableState {
@@ -254,11 +282,11 @@ export function setRunCount(state: TableState, runCount: RunCount): TableState {
   return normalize(next);
 }
 
-/** Empties every card from the table but keeps the seats and their players. */
+/** Empties every card from the table but keeps the seats, their players and the game variant. */
 export function clearCards(state: TableState): TableState {
   return {
     ...state,
-    seats: state.seats.map((s) => ({ ...s, hole: [null, null] })),
+    seats: state.seats.map((s) => ({ ...s, hole: emptyHole() })),
     board: emptyBoard(),
     runs: Array.from({ length: MAX_RUNS }, () => emptyBoard()),
     active: null,
@@ -269,7 +297,7 @@ function writeTarget(state: TableState, target: Target, card: Card | null): Tabl
   if (target.kind === "hole") {
     const seats = state.seats.map((s) => {
       if (s.id !== target.seatId) return s;
-      const hole: [Card | null, Card | null] = [s.hole[0], s.hole[1]];
+      const hole = [...s.hole];
       hole[target.index] = card;
       return { ...s, hole };
     });
@@ -306,24 +334,50 @@ function advance(state: TableState, from: Target): TableState {
 
 // ---- Engine seam -----------------------------------------------------------
 
-/** Everything the evaluation engine needs. Null until every seat has two cards and every board is complete. */
+/**
+ * Everything the equity simulation needs.
+ * - `variant`: decides how each hand is ranked (Omaha needs exactly two hole cards and three board cards).
+ * - `seats`: seated players and their hole cards. Empty seats are left out.
+ * - `runs`: the cards already dealt on each runout, in order. The rest are dealt at random.
+ * - `dead`: cards on the table that belong to an empty seat. They are not in the deck.
+ */
 export type EngineInput = {
-  seats: { seatId: string; playerId: string | null; hole: [Card, Card] }[];
-  boards: [Card, Card, Card, Card, Card][];
+  variant: Variant;
+  seats: { seatId: string; playerId: string; hole: Card[] }[];
+  runs: Card[][];
+  dead: Card[];
 };
 
+/**
+ * Builds engine input once at least two players are seated and each has every hole card the variant deals.
+ * The board may be partly dealt (including empty, preflop). Returns null otherwise.
+ */
 export function toEngineInput(state: TableState): EngineInput | null {
-  if (state.seats.length === 0) return null;
+  const seated = state.seats.filter((s) => s.playerId !== null);
+  if (seated.length < 2) return null;
+  const holeCount = HOLE_COUNT[state.variant];
+
   const seats: EngineInput["seats"] = [];
+  for (const seat of seated) {
+    const hole = seat.hole.slice(0, holeCount);
+    if (seat.playerId === null || hole.some((c) => c === null)) return null;
+    seats.push({ seatId: seat.id, playerId: seat.playerId, hole: hole as Card[] });
+  }
+
+  const dead: Card[] = [];
   for (const seat of state.seats) {
-    const [a, b] = seat.hole;
-    if (a === null || b === null) return null;
-    seats.push({ seatId: seat.id, playerId: seat.playerId, hole: [a, b] });
+    if (seat.playerId !== null) continue;
+    for (const card of seat.hole) if (card !== null) dead.push(card);
   }
-  const boards: EngineInput["boards"] = [];
-  for (const board of visibleBoards(state)) {
-    if (board.some((c) => c === null)) return null;
-    boards.push(board as EngineInput["boards"][number]);
-  }
-  return { seats, boards };
+
+  const runs = visibleBoards(state).map((board) => {
+    const known: Card[] = [];
+    for (const card of board) {
+      if (card === null) break;
+      known.push(card);
+    }
+    return known;
+  });
+
+  return { variant: state.variant, seats, runs, dead };
 }

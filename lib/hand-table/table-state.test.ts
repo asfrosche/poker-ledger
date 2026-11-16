@@ -78,7 +78,7 @@ describe("seats and players", () => {
     s = place(s, "Ah", "Kh");
     const synced = syncPlayers(s, new Set(["b"]));
     expect(synced.seats[0].playerId).toBeNull();
-    expect(synced.seats[0].hole).toEqual([c("Ah"), c("Kh")]);
+    expect(synced.seats[0].hole).toEqual([c("Ah"), c("Kh"), null, null]);
     expect(synced.seats[1].playerId).toBe("b");
   });
 });
@@ -196,16 +196,37 @@ describe("clearing", () => {
 });
 
 describe("engine seam", () => {
-  it("returns nothing until every seat and board is complete", () => {
+  it("needs at least two seated players with two cards each", () => {
     let s = startHole(withSeats("a"));
     expect(toEngineInput(s)).toBeNull();
     s = place(s, "Ah", "Kh");
-    expect(toEngineInput(s)).toBeNull(); // board still empty
-    s = selectTarget(s, { kind: "board", index: 0 });
-    s = place(s, "2c", "3c", "4c", "5c", "6c");
+    expect(toEngineInput(s)).toBeNull(); // only one player seated
+  });
+
+  it("is available preflop, with an empty board", () => {
+    let s = startHole(withSeats("a", "b"));
+    s = place(s, "Ah", "Kh", "2d", "3d");
     expect(toEngineInput(s)).toEqual({
-      seats: [{ seatId: "seat-0", playerId: "a", hole: [c("Ah"), c("Kh")] }],
-      boards: [[c("2c"), c("3c"), c("4c"), c("5c"), c("6c")]],
+      variant: "holdem",
+      seats: [
+        { seatId: "seat-0", playerId: "a", hole: [c("Ah"), c("Kh")] },
+        { seatId: "seat-1", playerId: "b", hole: [c("2d"), c("3d")] },
+      ],
+      runs: [[]],
+      dead: [],
     });
+  });
+
+  it("passes partly dealt boards and keeps empty-seat cards out of the deck", () => {
+    let s = startHole(withSeats("a", "b"));
+    s = place(s, "Ah", "Kh", "2d", "3d");
+    s = addSeat(s, "seat-empty", null);
+    s = selectTarget(s, { kind: "hole", seatId: "seat-empty", index: 0 });
+    s = placeCard(s, c("9s"));
+    s = selectTarget(s, { kind: "board", index: 0 });
+    s = place(s, "2c", "3c", "4c");
+    const input = toEngineInput(s);
+    expect(input?.runs).toEqual([[c("2c"), c("3c"), c("4c")]]);
+    expect(input?.dead).toEqual([c("9s")]);
   });
 });

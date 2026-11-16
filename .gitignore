@@ -43,3 +43,5 @@ next-env.d.ts
 # browser test artifacts
 .playwright-mcp/
 mobile-chip-board.png
+# Added by code-review-graph
+.code-review-graph/
