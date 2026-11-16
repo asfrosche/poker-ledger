@@ -15,7 +15,7 @@ function run(state: LedgerState, actions: LedgerActionInput[]): LedgerState {
   );
 }
 
-function newGame(state: LedgerState, name = "Friday", buyInPaise = 50000, chips = 1000, isSample = false) {
+function newGame(state: LedgerState, name = "Friday", buyInPaise = 50000, chips = 1000) {
   const before = state.games.length;
   const next = run(state, [
     {
@@ -27,7 +27,6 @@ function newGame(state: LedgerState, name = "Friday", buyInPaise = 50000, chips 
       chipsPerBuyIn: chips,
       venue: "",
       notes: "",
-      isSample,
     },
   ]);
   expect(next.games.length).toBe(before + 1);
@@ -300,11 +299,4 @@ describe("historical isolation and player history", () => {
     expect(history?.totalInvestedPaise).toBe(50000);
   });
 
-  it("clearing old sample games leaves real games untouched", () => {
-    const withSample = newGame(createEmptyState(), "Old sample", 50000, 1000, true).state;
-    const real = newGame(withSample, "Real night").state;
-    const cleared = run(real, [{ type: "data/clear-samples" }]);
-    expect(cleared.games.map((g) => g.name)).toEqual(["Real night"]);
-    expect(cleared.buyIns.every((b) => cleared.games.some((g) => g.id === b.gameId))).toBe(true);
-  });
 });

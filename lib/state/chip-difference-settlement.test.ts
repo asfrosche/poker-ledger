@@ -30,7 +30,6 @@ function mismatchedGame(finals: [number, number, number] = [1200, 900, 800]) {
       chipsPerBuyIn: 1000,
       venue: "",
       notes: "",
-      isSample: false,
     },
   ]);
   const gameId = state.games[0].id;

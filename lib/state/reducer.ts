@@ -59,7 +59,6 @@ export type LedgerAction = ActionBase &
         variants?: GameVariant[];
         smallBlindPaise?: number | null;
         bigBlindPaise?: number | null;
-        isSample?: boolean;
       }
     | { type: "game/update"; gameId: string; patch: GameConfigPatch }
     | { type: "game/archive"; gameId: string }
@@ -88,7 +87,6 @@ export type LedgerAction = ActionBase &
         note: string;
       }
     | { type: "player/create"; playerId: string; name: string }
-    | { type: "data/clear-samples" }
     | { type: "data/reset" }
   );
 
@@ -188,7 +186,6 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
         smallBlindPaise,
         bigBlindPaise,
         status: "open",
-        isSample: action.isSample ?? false,
         createdAt: action.at,
         settledAt: null,
         archivedAt: null,
@@ -263,7 +260,7 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
       const name = capitalizeName(action.name);
       if (!name || !action.playerId) return state;
       if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return state;
-      const player: Player = { id: action.playerId, name, isSample: false, createdAt: action.at };
+      const player: Player = { id: action.playerId, name, createdAt: action.at };
       return withAudit({ ...state, players: [...state.players, player] }, action, null, `${name} added as a player`);
     }
 
@@ -281,7 +278,7 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
           playerId = existing.id;
         } else {
           playerId = action.id;
-          const player: Player = { id: playerId, name, isSample: game.isSample, createdAt: action.at };
+          const player: Player = { id: playerId, name, createdAt: action.at };
           players = [...players, player];
         }
       }
@@ -485,25 +482,6 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
         ? `Payment marked paid: ${payer} → ${payee}`
         : `Payment reverted to unpaid: ${payer} → ${payee}`;
       return withAudit(next, action, game.id, message);
-    }
-
-    case "data/clear-samples": {
-      const sampleGameIds = new Set(state.games.filter((g) => g.isSample).map((g) => g.id));
-      const games = state.games.filter((g) => !g.isSample);
-      const gamePlayers = state.gamePlayers.filter((gp) => !sampleGameIds.has(gp.gameId));
-      const usedPlayerIds = new Set(gamePlayers.map((gp) => gp.playerId));
-      const next: LedgerState = {
-        ...state,
-        games,
-        gamePlayers,
-        buyIns: state.buyIns.filter((b) => !sampleGameIds.has(b.gameId)),
-        settlements: state.settlements.filter((s) => !sampleGameIds.has(s.gameId)),
-        players: state.players.filter((p) => !p.isSample || usedPlayerIds.has(p.id)),
-        selectedGameId: games.some((g) => g.id === state.selectedGameId)
-          ? state.selectedGameId
-          : (games[games.length - 1]?.id ?? null),
-      };
-      return withAudit(next, action, null, "Sample data cleared");
     }
 
     case "data/reset":

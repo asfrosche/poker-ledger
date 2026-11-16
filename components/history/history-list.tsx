@@ -40,7 +40,7 @@ export function HistoryList() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="label">Game #{game.number}{game.isSample ? " · Sample" : ""}</p>
+                      <p className="label">Game #{game.number}</p>
                       <h2 className="mt-1 truncate text-base font-semibold">{game.name}</h2>
                       <p className="text-sm text-muted">{formatGameDate(game.date)}</p>
                     </div>

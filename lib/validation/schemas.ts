@@ -122,7 +122,6 @@ const playerRecordSchema = z.object({
   id: z.string(),
   // Names saved before capitalisation was enforced are fixed on load.
   name: z.string().transform(capitalizeName),
-  isSample: z.boolean(),
   createdAt: isoTimestamp,
 });
 
@@ -153,7 +152,6 @@ const gameRecordSchema = z.preprocess(
   smallBlindPaise: z.number().int().nonnegative().nullable().default(null),
   bigBlindPaise: z.number().int().nonnegative().nullable().default(null),
   status: z.enum(["open", "settling", "settled", "archived"]),
-  isSample: z.boolean(),
   createdAt: isoTimestamp,
   settledAt: z.string().nullable(),
   archivedAt: z.string().nullable(),

@@ -43,7 +43,7 @@ export function GameRecord({ gameId }: { gameId: string }) {
       </Link>
 
       <PageHeading
-        eyebrow={`Game #${game.number} · ${formatGameDate(game.date)}${game.isSample ? " · Sample data" : ""}`}
+        eyebrow={`Game #${game.number} · ${formatGameDate(game.date)}`}
         title={game.name}
         actions={
           <>

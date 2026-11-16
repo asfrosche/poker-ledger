@@ -26,7 +26,6 @@ export function SettingsView() {
   const parsedBuyIn = parseMoneyToPaise(buyInText);
   const parsedChips = Number(chipsText.replace(/,/g, ""));
   const preview = parsedBuyIn && Number.isInteger(parsedChips) && parsedChips > 0 ? parsedBuyIn / parsedChips : null;
-  const sampleCount = state.games.filter((g) => g.isSample).length;
 
   function saveDefaults() {
     if (!parsedBuyIn || parsedBuyIn <= 0) {
@@ -133,15 +132,6 @@ export function SettingsView() {
           Everything lives in this browser’s storage. Clearing site data for this app deletes it.
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <ConfirmButton
-            label={`Clear sample data${sampleCount ? ` (${sampleCount} game${sampleCount === 1 ? "" : "s"})` : ""}`}
-            confirmLabel="Yes, clear samples"
-            disabled={sampleCount === 0}
-            onConfirm={() => {
-              dispatch({ type: "data/clear-samples" });
-              notify("Sample data cleared");
-            }}
-          />
           <ConfirmButton
             label="Erase all data"
             confirmLabel="Yes, erase everything"

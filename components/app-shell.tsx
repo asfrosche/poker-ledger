@@ -69,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {selectedLedger ? (
           <div className="flex items-center justify-between gap-2 border-t border-line px-4 py-1.5 sm:hidden">
             <span className="truncate font-mono text-[11px] uppercase tracking-[0.1em] text-muted">
-              {selectedGame?.isSample ? "Sample game" : "Game"} · {selectedLedger.totals.playerCount} players
+              Game · {selectedLedger.totals.playerCount} players
             </span>
             <StatusPill status={selectedLedger.displayStatus} />
           </div>

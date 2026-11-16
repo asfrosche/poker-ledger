@@ -32,7 +32,6 @@ export type GameVariant = "nlh" | "plo" | "omaha5" | "hilo" | "stud7" | "short";
 export interface Player {
   id: string;
   name: string;
-  isSample: boolean;
   createdAt: string;
 }
 
@@ -56,7 +55,6 @@ export interface Game {
   format: string;
   notes: string;
   status: GameStatus;
-  isSample: boolean;
   createdAt: string;
   settledAt: string | null;
   archivedAt: string | null;

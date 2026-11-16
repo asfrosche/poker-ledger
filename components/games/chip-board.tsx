@@ -65,7 +65,7 @@ function ChipBoardView({ state, game, ledger }: { state: LedgerState; game: Game
   return (
     <div className="flex flex-col gap-3 sm:gap-6">
       <PageHeading
-        eyebrow={`Game #${game.number} · ${formatGameDate(game.date)}${game.isSample ? " · Sample" : ""}`}
+        eyebrow={`Game #${game.number} · ${formatGameDate(game.date)}`}
         title={game.name}
         actions={
           <>
