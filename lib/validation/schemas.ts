@@ -15,8 +15,13 @@ export const gameConfigFormSchema = z
     venue: z.string().trim().max(80, "Venue must be under 80 characters"),
     format: z.string().trim().max(80, "Format must be under 80 characters"),
     notes: z.string().trim().max(2000, "Notes must be under 2,000 characters"),
+    variant: z.enum(["nlh", "plo", "omaha5", "hilo", "stud7", "short"], { message: "Pick a game variant" }),
+    smallBlindText: z.string(),
+    bigBlindText: z.string(),
   })
   .transform((value, ctx) => {
+    const blinds = parseBlinds(value.smallBlindText, value.bigBlindText);
+    if (blinds.error) ctx.addIssue({ code: "custom", message: blinds.error, path: ["bigBlindText"] });
     const buyInPaise = parseMoneyToPaise(value.buyInText);
     if (buyInPaise === null || buyInPaise <= 0) {
       ctx.addIssue({ code: "custom", message: "Enter a buy-in such as 500 or 500.50", path: ["buyInText"] });
@@ -25,8 +30,31 @@ export const gameConfigFormSchema = z
     if (!Number.isInteger(chipsPerBuyIn) || chipsPerBuyIn <= 0 || chipsPerBuyIn > 1_000_000) {
       ctx.addIssue({ code: "custom", message: "Chips must be a whole number above zero", path: ["chipsText"] });
     }
-    return { ...value, buyInPaise: buyInPaise ?? 0, chipsPerBuyIn: Number.isInteger(chipsPerBuyIn) ? chipsPerBuyIn : 0 };
+    return {
+      ...value,
+      buyInPaise: buyInPaise ?? 0,
+      chipsPerBuyIn: Number.isInteger(chipsPerBuyIn) ? chipsPerBuyIn : 0,
+      smallBlindPaise: blinds.small,
+      bigBlindPaise: blinds.big,
+    };
   });
+
+/**
+ * Blinds are optional. Both empty means none recorded. If one is given, both must be valid amounts,
+ * the small blind zero or more, and the big blind strictly larger than the small blind.
+ */
+export function parseBlinds(smallText: string, bigText: string): { small: number | null; big: number | null; error?: string } {
+  const s = smallText.trim();
+  const b = bigText.trim();
+  if (!s && !b) return { small: null, big: null };
+  if (!s || !b) return { small: null, big: null, error: "Enter both blinds, or leave both empty" };
+  const small = parseMoneyToPaise(s);
+  if (small === null) return { small: null, big: null, error: "Enter a small blind of zero or more, such as 5 or 5.50" };
+  const big = parseMoneyToPaise(b);
+  if (big === null) return { small: null, big: null, error: "Enter a big blind of zero or more, such as 10" };
+  if (big <= small) return { small: null, big: null, error: "The big blind must be more than the small blind" };
+  return { small, big };
+}
 
 export type GameConfigFormInput = z.input<typeof gameConfigFormSchema>;
 
@@ -105,6 +133,10 @@ const gameRecordSchema = z.object({
   venue: z.string(),
   format: z.string(),
   notes: z.string(),
+  // Games saved before variants existed default to No-Limit Hold'em with no recorded blinds.
+  variant: z.enum(["nlh", "plo", "omaha5", "hilo", "stud7", "short"]).default("nlh"),
+  smallBlindPaise: z.number().int().nonnegative().nullable().default(null),
+  bigBlindPaise: z.number().int().nonnegative().nullable().default(null),
   status: z.enum(["open", "settling", "settled", "archived"]),
   isSample: z.boolean(),
   createdAt: isoTimestamp,
@@ -163,10 +195,14 @@ const settlementRecordSchema = z.object({
 export const ledgerStateSchema = z.object({
   schemaVersion: z.literal(1),
   settings: z.object({
+    // Newer fields default safely, so ledgers saved before they existed still load.
+    currencyAuto: z.boolean().default(true),
     defaultCurrency: z.string(),
     defaultBuyInPaise: z.number().int().positive(),
     defaultChipsPerBuyIn: z.number().int().positive(),
     defaultFormat: z.string(),
+    defaultSmallBlindPaise: z.number().int().nonnegative().default(500),
+    defaultBigBlindPaise: z.number().int().nonnegative().default(1000),
   }),
   players: z.array(playerRecordSchema),
   games: z.array(gameRecordSchema),

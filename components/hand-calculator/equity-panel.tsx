@@ -4,6 +4,7 @@ import { useState } from "react";
 import { clsx } from "clsx";
 import type { Outcome, SeatEquity } from "@/lib/hand-table/equity";
 import type { Seat, TableState } from "@/lib/hand-table/table-state";
+import { HOLE_COUNT } from "@/lib/hand-table/variant";
 import type { EquityView } from "./use-table-equity";
 
 type View = "overall" | number;
@@ -95,6 +96,9 @@ export function EquityPanel({
               <li key={seat.id} className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className={clsx("min-w-0 truncate text-sm font-medium", !seated && "text-muted")}>{seatName(seat)}</span>
+                  {hiddenCards(state, seat) > 0 ? (
+                    <span className="shrink-0 text-xs text-muted">{hiddenCards(state, seat)} hidden</span>
+                  ) : null}
                   <span className={clsx("font-mono text-lg font-semibold tabular-nums", !entry && "text-muted")}>
                     {entry ? percent(entry.outcome.equity) : "—"}
                   </span>
@@ -116,12 +120,21 @@ export function EquityPanel({
 
       {result ? (
         <p className="border-t border-line pt-3 text-xs text-muted">
-          {result.trials === 1 ? "Exact result: every board is complete." : null}
+          {result.method === "exact"
+            ? "Method: exact. Every possible deal was checked."
+            : `Method: Monte Carlo, ${result.trials.toLocaleString()} random deals per runout.`}
           {state.runCount > 1 ? " Overall averages the runouts equally." : null}
         </p>
       ) : null}
     </section>
   );
+}
+
+/** Cards a seat in play has not had dealt. These are drawn at random by the calculation. */
+function hiddenCards(state: TableState, seat: Seat): number {
+  if (seat.playerId === null && seat.hole.every((c) => c === null)) return 0;
+  const holeCount = HOLE_COUNT[state.variant];
+  return holeCount - seat.hole.slice(0, holeCount).filter((c) => c !== null).length;
 }
 
 function ViewButton({ label, checked, onClick }: { label: string; checked: boolean; onClick: () => void }) {

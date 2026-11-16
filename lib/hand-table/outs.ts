@@ -2,9 +2,14 @@
 // Counted for the next card only, so they are defined with a flop (3 cards) or turn (4 cards) showing.
 
 import { FULL_DECK, type Card } from "@/lib/poker/cards";
-import { evaluateHand } from "./variant";
+import { evaluateHand, HOLE_COUNT } from "./variant";
 import type { SeatEquity } from "./equity";
 import type { EngineInput } from "./table-state";
+
+/** True when every seat holds all the cards its variant deals. */
+export function allHandsKnown(input: EngineInput): boolean {
+  return input.seats.every((s) => s.hole.length === HOLE_COUNT[input.variant]);
+}
 
 /**
  * Cards that give `seatIndex` the outright best hand on `runIndex` as the next card.
@@ -14,6 +19,8 @@ import type { EngineInput } from "./table-state";
 export function computeOuts(input: EngineInput, seatIndex: number, runIndex: number): Card[] | null {
   const board = input.runs[runIndex];
   if (!board || board.length < 3 || board.length > 4) return null;
+  // Outs depend on the actual hands, so every player's cards must be known.
+  if (allHandsKnown(input) === false) return null;
 
   const known = new Set<Card>([...input.dead, ...input.seats.flatMap((s) => s.hole), ...input.runs.flat()]);
   const hole = input.seats[seatIndex].hole;
@@ -42,7 +49,7 @@ export type SeatOuts = { run: number; ahead: boolean; cards: Card[] }[];
 /** True when this seat's current best hand strictly beats every other seat's on the board as it stands. */
 export function isAhead(input: EngineInput, seatIndex: number, runIndex: number): boolean {
   const board = input.runs[runIndex];
-  if (board.length < 3) return false;
+  if (board.length < 3 || allHandsKnown(input) === false) return false;
   const mine = evaluateHand(input.variant, input.seats[seatIndex].hole, board);
   return input.seats.every((seat, s) => s === seatIndex || evaluateHand(input.variant, seat.hole, board) < mine);
 }

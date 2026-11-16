@@ -1,8 +1,8 @@
 // Result types for the table's win probabilities, and the rule for when they can be calculated.
 // The numbers come from the simulation in simulate.ts; nothing here invents results.
 
-import { toEngineInput, type EngineInput, type TableState } from "./table-state";
-import { HOLE_COUNT } from "./variant";
+import { occupiedSeats, toEngineInput, type EngineInput, type TableState } from "./table-state";
+import { drawsNeeded, unseenCards } from "./simulate";
 
 /** Fractions from 0 to 1. `equity` = win + tie share, where a split pot counts for each sharer. */
 export type Outcome = {
@@ -27,8 +27,10 @@ export type RunEquity = {
 export type TableEquity = {
   runs: RunEquity[];
   overall: SeatEquity[];
-  /** Random deals per runout. 1 when every board is complete, because the result is then exact. */
+  /** Deals counted per runout: every possible deal when exact, otherwise the random deals drawn. */
   trials: number;
+  /** How the numbers were produced. Shown in the panel so the method is never hidden. */
+  method: "exact" | "monte-carlo";
 };
 
 export type EquityStatus =
@@ -37,17 +39,17 @@ export type EquityStatus =
 
 /** Says whether the table can be calculated yet, and if not, what is missing. */
 export function equityStatus(state: TableState): EquityStatus {
-  const seated = state.seats.filter((s) => s.playerId !== null);
-  if (seated.length < 2) {
+  // Hidden cards are fine: any seat with a player or a card is in play, and its unknown cards are dealt at random.
+  const occupied = occupiedSeats(state);
+  if (occupied.length < 2) {
     return { kind: "waiting", message: "Seat at least two players to calculate." };
-  }
-  const holeCount = HOLE_COUNT[state.variant];
-  if (seated.some((s) => s.hole.slice(0, holeCount).some((c) => c === null))) {
-    return { kind: "waiting", message: `Deal ${holeCount} cards to every seated player to calculate.` };
   }
   const input = toEngineInput(state);
   if (input === null) {
-    return { kind: "waiting", message: `Deal ${holeCount} cards to every seated player to calculate.` };
+    return { kind: "waiting", message: "Seat at least two players to calculate." };
+  }
+  if (drawsNeeded(input) > unseenCards(input).length) {
+    return { kind: "waiting", message: "Too many cards are already placed to finish this board." };
   }
   return { kind: "ready", input };
 }

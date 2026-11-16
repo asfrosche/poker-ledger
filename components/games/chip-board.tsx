@@ -1,5 +1,7 @@
 "use client";
 
+import { GameMeta } from "./game-meta";
+
 import Link from "next/link";
 import { Fragment, useState, type FormEvent } from "react";
 import { AlertTriangle, ChevronDown, Lock, Plus, Settings2, Unlock } from "lucide-react";
@@ -74,6 +76,7 @@ function ChipBoardView({ state, game, ledger }: { state: LedgerState; game: Game
           </>
         }
       />
+      <GameMeta game={game} />
 
       {!editable ? (
         <Panel className="flex flex-col gap-4 border-warn/40 bg-warn-soft p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">

@@ -9,6 +9,8 @@ import { computeGameLedger } from "@/lib/calculations/ledger";
 import { Button, ConfirmButton, EmptyState, PageHeading, Panel, SignedMoney, Stat, StatusPill } from "@/components/ui/primitives";
 import { formatChips, formatMoney, formatRate } from "@/lib/money";
 import { formatGameDate, formatTimestamp } from "@/lib/format";
+import { variantLabel } from "@/lib/game-variants";
+import { blindsText } from "@/components/games/game-meta";
 import { buyInHistoryCsv, downloadText, gameSummaryCsv, playerResultsCsv, settlementCsv, slugify } from "@/lib/export";
 
 export function GameRecord({ gameId }: { gameId: string }) {
@@ -69,6 +71,8 @@ export function GameRecord({ gameId }: { gameId: string }) {
           <div><dt className="label">Chips per buy-in</dt><dd className="num mt-1">{formatChips(game.chipsPerBuyIn)}</dd></div>
           <div><dt className="label">Venue</dt><dd className="mt-1">{game.venue || "—"}</dd></div>
           <div><dt className="label">Format</dt><dd className="mt-1">{game.format || "—"}</dd></div>
+          <div><dt className="label">Variant</dt><dd className="mt-1">{variantLabel(game.variant)}</dd></div>
+          <div><dt className="label">Blinds</dt><dd className="num mt-1">{blindsText(game)}</dd></div>
         </dl>
         {game.notes ? <p className="mt-4 whitespace-pre-wrap rounded-[10px] bg-surface p-3 text-sm">{game.notes}</p> : null}
       </Panel>

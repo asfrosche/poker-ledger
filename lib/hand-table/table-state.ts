@@ -343,7 +343,7 @@ function advance(state: TableState, from: Target): TableState {
  */
 export type EngineInput = {
   variant: Variant;
-  seats: { seatId: string; playerId: string; hole: Card[] }[];
+  seats: { seatId: string; playerId: string | null; hole: Card[] }[];
   runs: Card[][];
   dead: Card[];
 };
@@ -352,21 +352,30 @@ export type EngineInput = {
  * Builds engine input once at least two players are seated and each has every hole card the variant deals.
  * The board may be partly dealt (including empty, preflop). Returns null otherwise.
  */
-export function toEngineInput(state: TableState): EngineInput | null {
-  const seated = state.seats.filter((s) => s.playerId !== null);
-  if (seated.length < 2) return null;
+/**
+ * Seats in play: anyone with a player, and any seat holding every hole card the variant deals.
+ * A seat with a few cards and no player is not in play yet, and its cards stay out of the deck.
+ */
+export function occupiedSeats(state: TableState): Seat[] {
   const holeCount = HOLE_COUNT[state.variant];
+  return state.seats.filter((s) => s.playerId !== null || s.hole.slice(0, holeCount).some((c) => c !== null));
+}
 
-  const seats: EngineInput["seats"] = [];
-  for (const seat of seated) {
-    const hole = seat.hole.slice(0, holeCount);
-    if (seat.playerId === null || hole.some((c) => c === null)) return null;
-    seats.push({ seatId: seat.id, playerId: seat.playerId, hole: hole as Card[] });
-  }
+export function toEngineInput(state: TableState): EngineInput | null {
+  const holeCount = HOLE_COUNT[state.variant];
+  const occupied = occupiedSeats(state);
+  if (occupied.length < 2) return null;
+
+  // Known cards only. Any cards a seat is missing are dealt at random by the calculation.
+  const seats: EngineInput["seats"] = occupied.map((seat) => ({
+    seatId: seat.id,
+    playerId: seat.playerId,
+    hole: seat.hole.slice(0, holeCount).filter((c): c is Card => c !== null),
+  }));
 
   const dead: Card[] = [];
   for (const seat of state.seats) {
-    if (seat.playerId !== null) continue;
+    if (occupied.includes(seat)) continue;
     for (const card of seat.hole) if (card !== null) dead.push(card);
   }
 

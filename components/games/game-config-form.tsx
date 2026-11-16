@@ -3,8 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { FieldError, FieldLabel, Button } from "@/components/ui/primitives";
 import { formatRate, formatMoney, SUPPORTED_CURRENCIES, paiseToInput, parseMoneyToPaise } from "@/lib/money";
+import { currencyInfo } from "@/lib/currency";
+import { GAME_VARIANTS } from "@/lib/game-variants";
 import { validateGameConfig, type GameConfigFormInput } from "@/lib/validation/schemas";
-import type { Game } from "@/types";
+import type { Game, GameVariant } from "@/types";
 
 export interface GameConfigValues {
   name: string;
@@ -15,6 +17,9 @@ export interface GameConfigValues {
   venue: string;
   format: string;
   notes: string;
+  variant: GameVariant;
+  smallBlindPaise: number | null;
+  bigBlindPaise: number | null;
 }
 
 interface Props {
@@ -25,6 +30,8 @@ interface Props {
   disabled?: boolean;
   compact?: boolean;
 }
+
+const blindText = (paise: number | null | undefined) => (paise === null || paise === undefined ? "" : paiseToInput(paise));
 
 /** Shared game configuration form for creating and editing a game. */
 export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disabled, compact }: Props) {
@@ -37,6 +44,9 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
     venue: initial.venue,
     format: initial.format,
     notes: initial.notes,
+    variant: initial.variant ?? "nlh",
+    smallBlindText: blindText(initial.smallBlindPaise),
+    bigBlindText: blindText(initial.bigBlindPaise),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -46,6 +56,7 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
     previewPaise && Number.isInteger(previewChips) && previewChips > 0
       ? previewPaise / previewChips
       : null;
+  const variantInfo = GAME_VARIANTS.find((v) => v.key === form.variant);
 
   const set = (key: keyof GameConfigFormInput) => (event: { target: { value: string } }) =>
     setForm((current) => ({ ...current, [key]: event.target.value }));
@@ -64,6 +75,9 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
         venue: result.data.venue,
         format: result.data.format,
         notes: result.data.notes,
+        variant: result.data.variant,
+        smallBlindPaise: result.data.smallBlindPaise,
+        bigBlindPaise: result.data.bigBlindPaise,
       });
     }
   }
@@ -92,11 +106,26 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
       </div>
 
       <div>
+        <FieldLabel htmlFor="gc-variant">Variant</FieldLabel>
+        <select id="gc-variant" className="field" value={form.variant} onChange={set("variant")} disabled={disabled} aria-describedby="gc-variant-desc">
+          {GAME_VARIANTS.map((v) => (
+            <option key={v.key} value={v.key}>
+              {v.label}
+            </option>
+          ))}
+        </select>
+        <p id="gc-variant-desc" className="mt-1 text-xs text-muted">
+          {variantInfo?.description}
+        </p>
+        <FieldError message={errors.variant} />
+      </div>
+
+      <div>
         <FieldLabel htmlFor="gc-currency">Currency</FieldLabel>
         <select id="gc-currency" className="field" value={form.currency} onChange={set("currency")} disabled={disabled}>
           {SUPPORTED_CURRENCIES.map((code) => (
             <option key={code} value={code}>
-              {code}
+              {code} · {currencyInfo(code)?.name ?? code}
             </option>
           ))}
         </select>
@@ -145,6 +174,36 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
         </span>
       </div>
 
+      <div>
+        <FieldLabel htmlFor="gc-small-blind">Small blind</FieldLabel>
+        <input
+          id="gc-small-blind"
+          inputMode="decimal"
+          className="field num"
+          value={form.smallBlindText}
+          onChange={set("smallBlindText")}
+          disabled={disabled}
+          aria-invalid={!!errors.smallBlindText}
+          placeholder="5"
+        />
+        <FieldError message={errors.smallBlindText} />
+      </div>
+
+      <div>
+        <FieldLabel htmlFor="gc-big-blind">Big blind</FieldLabel>
+        <input
+          id="gc-big-blind"
+          inputMode="decimal"
+          className="field num"
+          value={form.bigBlindText}
+          onChange={set("bigBlindText")}
+          disabled={disabled}
+          aria-invalid={!!errors.bigBlindText}
+          placeholder="10"
+        />
+        <FieldError message={errors.bigBlindText} />
+      </div>
+
       {!compact ? (
         <>
           <div>
@@ -162,7 +221,7 @@ export function GameConfigForm({ initial, submitLabel, onSubmit, onCancel, disab
 
       <div className="sm:col-span-2">
         <FieldLabel htmlFor="gc-notes">Notes</FieldLabel>
-        <textarea id="gc-notes" className="field min-h-20" rows={3} value={form.notes} onChange={set("notes")} disabled={disabled} placeholder="House rules, blinds, anything worth remembering" />
+        <textarea id="gc-notes" className="field min-h-20" rows={3} value={form.notes} onChange={set("notes")} disabled={disabled} placeholder="House rules, anything worth remembering" />
         <FieldError message={errors.notes} />
       </div>
 

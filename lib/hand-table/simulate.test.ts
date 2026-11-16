@@ -99,6 +99,55 @@ describe("simulateTable", () => {
     expect(result.trials).toBe(3500);
   });
 
+  it("uses the exact method when at most two cards remain, and says so", () => {
+    // Board is complete. Seat a has the royal flush, so no hidden hand can beat or tie it.
+    const input: EngineInput = {
+      variant: "holdem",
+      seats: [
+        { seatId: "a", playerId: "p1", hole: [c("Ah"), c("Kh")] },
+        { seatId: "b", playerId: "p2", hole: [] }, // both cards hidden
+      ],
+      runs: [[c("Qh"), c("Jh"), c("Th"), c("9c"), c("4s")]],
+      dead: [],
+    };
+    const result = simulateTable(input);
+    expect(result.method).toBe("exact");
+    expect(result.overall[0].outcome.equity).toBe(1);
+    expect(result.overall[1].outcome.equity).toBe(0);
+  });
+
+  it("uses Monte Carlo when more cards remain, and says so", () => {
+    const input: EngineInput = {
+      variant: "holdem",
+      seats: [
+        { seatId: "a", playerId: "p1", hole: [c("Ah"), c("Ad")] },
+        { seatId: "b", playerId: "p2", hole: [] },
+      ],
+      runs: [[]],
+      dead: [],
+    };
+    const result = simulateTable(input, 2000);
+    expect(result.method).toBe("monte-carlo");
+    expect(result.trials).toBe(2000);
+  });
+
+  it("hidden cards are never a card already on the table", () => {
+    // Seat a holds As. Hidden cards for seat b must not include As, so b cannot hold the ace.
+    const input: EngineInput = {
+      variant: "holdem",
+      seats: [
+        { seatId: "a", playerId: "p1", hole: [c("As"), c("Ks")] },
+        { seatId: "b", playerId: "p2", hole: [c("Qd")] }, // one hidden card
+      ],
+      runs: [[c("2c"), c("7d"), c("9h"), c("Jc")]],
+      dead: [],
+    };
+    const result = simulateTable(input);
+    expect(result.method).toBe("exact"); // one card left to deal
+    const sum = result.overall.reduce((total, s) => total + s.outcome.equity, 0);
+    expect(sum).toBeCloseTo(1, 9);
+  });
+
   it("refuses fewer than two players", () => {
     expect(() => simulateTable({ variant: "holdem", seats: [seat("a", "Ah", "Kh")], runs: [[]], dead: [] })).toThrow();
   });

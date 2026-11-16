@@ -4,7 +4,7 @@ import {
 } from "@/lib/calculations/ledger";
 import { computeTransfers } from "@/lib/calculations/settlement";
 import { applyAdjustment, computeAdjustment } from "@/lib/calculations/adjustment";
-import type { AdjustmentMethod } from "@/types";
+import type { AdjustmentMethod, GameVariant } from "@/types";
 import type {
   AuditEntry,
   BuyIn,
@@ -25,7 +25,20 @@ interface ActionBase {
 }
 
 export type GameConfigPatch = Partial<
-  Pick<Game, "name" | "date" | "currency" | "buyInPaise" | "chipsPerBuyIn" | "venue" | "format" | "notes">
+  Pick<
+    Game,
+    | "name"
+    | "date"
+    | "currency"
+    | "buyInPaise"
+    | "chipsPerBuyIn"
+    | "venue"
+    | "format"
+    | "notes"
+    | "variant"
+    | "smallBlindPaise"
+    | "bigBlindPaise"
+  >
 >;
 
 export type LedgerAction = ActionBase &
@@ -43,6 +56,9 @@ export type LedgerAction = ActionBase &
         venue: string;
         format: string;
         notes: string;
+        variant?: GameVariant;
+        smallBlindPaise?: number | null;
+        bigBlindPaise?: number | null;
         isSample?: boolean;
       }
     | { type: "game/update"; gameId: string; patch: GameConfigPatch }
@@ -83,10 +99,13 @@ export type LedgerActionInput = LedgerAction extends infer A
   : never;
 
 export const DEFAULT_SETTINGS: Settings = {
+  currencyAuto: true,
   defaultCurrency: "INR",
   defaultBuyInPaise: 50000,
   defaultChipsPerBuyIn: 1000,
   defaultFormat: "No-limit Hold'em",
+  defaultSmallBlindPaise: 500,
+  defaultBigBlindPaise: 1000,
 };
 
 export function createEmptyState(): LedgerState {
@@ -121,6 +140,16 @@ function isPositiveInt(value: number): boolean {
 }
 
 /**
+ * Blinds are optional, but if either is given both must be whole paise amounts,
+ * zero or more, with the big blind strictly larger than the small blind.
+ */
+export function isValidBlinds(small: number | null, big: number | null): boolean {
+  if (small === null && big === null) return true;
+  if (small === null || big === null) return false;
+  return Number.isInteger(small) && Number.isInteger(big) && small >= 0 && big > small;
+}
+
+/**
  * Pure state transition. Invalid requests (unknown ids, editing a locked game,
  * unbalanced chips) return the state unchanged; the UI explains why beforehand.
  */
@@ -139,6 +168,9 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
 
     case "game/create": {
       if (!isPositiveInt(action.buyInPaise) || !isPositiveInt(action.chipsPerBuyIn)) return state;
+      const smallBlindPaise = action.smallBlindPaise ?? null;
+      const bigBlindPaise = action.bigBlindPaise ?? null;
+      if (!isValidBlinds(smallBlindPaise, bigBlindPaise)) return state;
       const number = state.games.reduce((max, g) => Math.max(max, g.number), 0) + 1;
       const game: Game = {
         id: action.id,
@@ -151,6 +183,9 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
         venue: action.venue,
         format: action.format,
         notes: action.notes,
+        variant: action.variant ?? "nlh",
+        smallBlindPaise,
+        bigBlindPaise,
         status: "open",
         isSample: action.isSample ?? false,
         createdAt: action.at,
@@ -167,6 +202,11 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
       const patch = action.patch;
       if (patch.buyInPaise !== undefined && !isPositiveInt(patch.buyInPaise)) return state;
       if (patch.chipsPerBuyIn !== undefined && !isPositiveInt(patch.chipsPerBuyIn)) return state;
+      if (patch.smallBlindPaise !== undefined || patch.bigBlindPaise !== undefined) {
+        const small = patch.smallBlindPaise !== undefined ? patch.smallBlindPaise : game.smallBlindPaise;
+        const big = patch.bigBlindPaise !== undefined ? patch.bigBlindPaise : game.bigBlindPaise;
+        if (!isValidBlinds(small, big)) return state;
+      }
       const updated = { ...game, ...patch, name: (patch.name ?? game.name).trim() };
       return withAudit(
         replaceGame(state, updated),

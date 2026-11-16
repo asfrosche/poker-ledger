@@ -5,7 +5,10 @@
 
 export const PAISE_PER_RUPEE = 100;
 
-export const SUPPORTED_CURRENCIES = ["INR", "USD", "EUR", "GBP"] as const;
+import { CURRENCY_CODES } from "@/lib/currency";
+
+/** Every currency the app accepts. Defined in lib/currency.ts. */
+export const SUPPORTED_CURRENCIES = CURRENCY_CODES;
 
 /** Parses a user-entered amount such as "500", "1,000" or "500.5" into paise. */
 export function parseMoneyToPaise(input: string): number | null {
@@ -25,7 +28,9 @@ export function paiseToInput(paise: number): string {
 }
 
 function localeFor(currency: string): string {
-  return currency === "INR" ? "en-IN" : "en-US";
+  if (currency === "INR") return "en-IN";
+  if (currency === "GBP") return "en-GB";
+  return "en-US";
 }
 
 /**

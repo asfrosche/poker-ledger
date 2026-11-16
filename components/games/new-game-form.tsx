@@ -7,6 +7,8 @@ import { useLedger } from "@/lib/state/ledger-context";
 import { useToast } from "@/components/ui/toast";
 import { todayIsoDate } from "@/lib/format";
 import { defaultGameName } from "@/lib/game-name";
+import { detectCurrency, effectiveCurrency } from "@/lib/currency";
+import { DEFAULT_VARIANT } from "@/lib/game-variants";
 
 export function NewGameForm() {
   const { state, dispatch } = useLedger();
@@ -28,12 +30,15 @@ export function NewGameForm() {
           initial={{
             name: defaultGameName(new Date()),
             date: todayIsoDate(),
-            currency: s.defaultCurrency,
+            currency: effectiveCurrency(s, detectCurrency().code),
             buyInPaise: s.defaultBuyInPaise,
             chipsPerBuyIn: s.defaultChipsPerBuyIn,
             venue: "",
             format: s.defaultFormat,
             notes: "",
+            variant: DEFAULT_VARIANT,
+            smallBlindPaise: s.defaultSmallBlindPaise,
+            bigBlindPaise: s.defaultBigBlindPaise,
           }}
           submitLabel="Create game"
           onCancel={() => router.back()}

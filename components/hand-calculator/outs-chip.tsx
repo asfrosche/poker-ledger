@@ -5,6 +5,7 @@ import { RANK_NAMES, SUIT_SYMBOLS, cardRank, cardSuit, type Card } from "@/lib/p
 import { computeOuts, playerBehind } from "@/lib/hand-table/outs";
 import { toEngineInput, type Seat, type TableState } from "@/lib/hand-table/table-state";
 import type { EquityView } from "./use-table-equity";
+import { HOLE_COUNT } from "@/lib/hand-table/variant";
 
 const MAX_CARDS_SHOWN = 12;
 
@@ -37,6 +38,8 @@ export function OutsChip({
     body = "Outs appear from the flop.";
   } else if (input.runs.every((run) => run.length === 5)) {
     body = "Board complete, so there is no next card.";
+  } else if (input.seats.some((s) => s.hole.length < HOLE_COUNT[input.variant])) {
+    body = "Outs need every player's cards dealt. Hidden cards can't be counted as outs.";
   } else if (!behindSeat || !behindId) {
     body = "Waiting for the odds to show who is behind.";
   } else {

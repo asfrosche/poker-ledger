@@ -217,16 +217,18 @@ describe("engine seam", () => {
     });
   });
 
-  it("passes partly dealt boards and keeps empty-seat cards out of the deck", () => {
+  it("passes partly dealt boards, and a seat with a card but no player is in play", () => {
     let s = startHole(withSeats("a", "b"));
     s = place(s, "Ah", "Kh", "2d", "3d");
-    s = addSeat(s, "seat-empty", null);
-    s = selectTarget(s, { kind: "hole", seatId: "seat-empty", index: 0 });
+    s = addSeat(s, "seat-hidden", null);
+    s = selectTarget(s, { kind: "hole", seatId: "seat-hidden", index: 0 });
     s = placeCard(s, c("9s"));
     s = selectTarget(s, { kind: "board", index: 0 });
     s = place(s, "2c", "3c", "4c");
     const input = toEngineInput(s);
     expect(input?.runs).toEqual([[c("2c"), c("3c"), c("4c")]]);
-    expect(input?.dead).toEqual([c("9s")]);
+    expect(input?.seats.map((x) => x.seatId)).toEqual(["seat-0", "seat-1", "seat-hidden"]);
+    expect(input?.seats[2].hole).toEqual([c("9s")]);
+    expect(input?.dead).toEqual([]);
   });
 });

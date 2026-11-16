@@ -58,13 +58,14 @@ describe("variants on the table", () => {
     s = placeCard(s, c("Ks"));
     const omaha = setVariant(s, "omaha");
     expect(omaha.seats[0].hole.slice(0, 2)).toEqual([c("As"), c("Ks")]);
-    expect(equityStatus(omaha).kind).toBe("waiting"); // third and fourth cards still needed
+    // Third and fourth cards are hidden, so the calculation can still run.
+    expect(equityStatus(omaha).kind).toBe("ready");
   });
 
-  it("Omaha needs four cards per seat before the engine input is built", () => {
+  it("Omaha seats with fewer than four known cards still build engine input, with the rest hidden", () => {
     let s = setVariant(createTableState("holdem"), "omaha");
     s = addSeat(addSeat(s, "a", "p1"), "b", "p2");
-    expect(toEngineInput(s)).toBeNull();
+    expect(toEngineInput(s)?.seats.map((x) => x.hole)).toEqual([[], []]);
   });
 });
 

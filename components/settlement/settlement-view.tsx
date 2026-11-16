@@ -419,6 +419,8 @@ function UnlockPanel({ game, active }: { game: Game; active: Settlement | null }
 
 function SupersededList({ settlements, state }: { settlements: Settlement[]; state: LedgerState }) {
   const name = (id: string) => state.players.find((p) => p.id === id)?.name ?? "Unknown";
+  // Each settlement belongs to one game, so its amounts use that game's currency.
+  const currencyOf = (gameId: string) => state.games.find((g) => g.id === gameId)?.currency ?? "INR";
   return (
     <Panel className="flex flex-col gap-3 p-4 sm:p-5">
       <h2 className="label">Earlier settlements (kept for audit)</h2>
@@ -431,7 +433,7 @@ function SupersededList({ settlements, state }: { settlements: Settlement[]; sta
           <ul className="mt-2 flex flex-col gap-1">
             {s.payments.map((p) => (
               <li key={p.id} className="num">
-                {name(p.fromPlayerId)} → {name(p.toPlayerId)} · {formatMoney(p.amountPaise)} · {p.paid ? `paid ${formatTimestamp(p.paidAt)}` : "unpaid"}
+                {name(p.fromPlayerId)} → {name(p.toPlayerId)} · {formatMoney(p.amountPaise, currencyOf(s.gameId))} · {p.paid ? `paid ${formatTimestamp(p.paidAt)}` : "unpaid"}
               </li>
             ))}
           </ul>

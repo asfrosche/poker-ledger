@@ -14,11 +14,19 @@ export type DisplayStatus =
   | "archived";
 
 export interface Settings {
+  /** When true, new games use the currency detected from the device's timezone. */
+  currencyAuto: boolean;
+  /** Manual currency, used when currencyAuto is false. */
   defaultCurrency: string;
   defaultBuyInPaise: number;
   defaultChipsPerBuyIn: number;
   defaultFormat: string;
+  defaultSmallBlindPaise: number;
+  defaultBigBlindPaise: number;
 }
+
+/** Game variants. Metadata only: they never change calculations, chip accounting, buy-ins or settlements. */
+export type GameVariant = "nlh" | "plo" | "omaha5" | "hilo" | "stud7" | "short";
 
 /** Reusable player profile, shared across games. */
 export interface Player {
@@ -35,6 +43,11 @@ export interface Game {
   /** YYYY-MM-DD */
   date: string;
   currency: string;
+  /** Game variant. Older games default to No-Limit Hold'em. */
+  variant: GameVariant;
+  /** Blinds in paise, or null when not recorded (older games). */
+  smallBlindPaise: number | null;
+  bigBlindPaise: number | null;
   /** Standard buy-in snapshot for this game. */
   buyInPaise: number;
   /** Standard chips issued per standard buy-in. */
