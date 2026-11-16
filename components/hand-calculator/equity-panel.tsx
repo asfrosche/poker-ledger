@@ -29,15 +29,19 @@ export function EquityPanel({
   const hasResult = view_.kind === "ready" || view_.kind === "refining";
   const result = hasResult ? view_.result : null;
   const working = view_.kind === "calculating" || view_.kind === "refining";
+  // While a new table recalculates, keep the last numbers on screen (dimmed) instead of blanking the panel.
+  const previous = view_.kind === "calculating" ? (view_.previous ?? null) : null;
+  const displayed = result ?? previous;
+  const stale = previous !== null;
 
   const [requested, setRequested] = useState<View>("overall");
   // If the run count drops below the selected run, fall back to the overall view.
   const view: View = requested !== "overall" && requested >= state.runCount ? "overall" : requested;
 
-  const rows: SeatEquity[] | null = result
+  const rows: SeatEquity[] | null = displayed
     ? view === "overall"
-      ? result.overall
-      : (result.runs.find((r) => r.run === view)?.seats ?? null)
+      ? displayed.overall
+      : (displayed.runs.find((r) => r.run === view)?.seats ?? null)
     : null;
 
   const label =
@@ -83,12 +87,16 @@ export function EquityPanel({
         </div>
       ) : null}
 
-      {view_.kind === "waiting" || view_.kind === "error" ? (
-        <p className={clsx("text-sm", view_.kind === "error" ? "text-loss" : "text-muted")}>{view_.message}</p>
-      ) : null}
+      {/* Reserved line: the message appears here without shifting the panel. */}
+      <p
+        className={clsx("min-h-5 text-sm", view_.kind === "error" ? "text-loss" : "text-muted")}
+        aria-hidden={view_.kind !== "waiting" && view_.kind !== "error"}
+      >
+        {view_.kind === "waiting" || view_.kind === "error" ? view_.message : ""}
+      </p>
 
       {state.seats.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className={clsx("flex flex-col gap-2 transition-opacity", stale && "opacity-60")}>
           {state.seats.map((seat) => {
             const seated = seat.playerId !== null;
             const entry = rows?.find((r) => r.seatId === seat.id);
@@ -104,28 +112,30 @@ export function EquityPanel({
                   </span>
                 </div>
                 <ProbabilityBar outcome={entry?.outcome ?? null} calculating={working} />
-                {entry ? (
-                  <div className="flex flex-wrap gap-x-4 font-mono text-[11px] text-muted">
-                    <Stat label="Win" value={percent(entry.outcome.win)} />
-                    <Stat label="Tie" value={percent(entry.outcome.tie)} />
-                    <Stat label="Loss" value={percent(entry.outcome.lose)} />
-                    <Stat label="Equity" value={percent(entry.outcome.equity)} />
-                  </div>
-                ) : null}
+                {/* Always rendered so the seat keeps its height whether or not numbers are available. */}
+                <div className={clsx("flex min-h-4 flex-wrap gap-x-4 font-mono text-[11px] text-muted", !entry && "invisible")}>
+                  <Stat label="Win" value={entry ? percent(entry.outcome.win) : "—"} />
+                  <Stat label="Tie" value={entry ? percent(entry.outcome.tie) : "—"} />
+                  <Stat label="Loss" value={entry ? percent(entry.outcome.lose) : "—"} />
+                  <Stat label="Equity" value={entry ? percent(entry.outcome.equity) : "—"} />
+                </div>
               </li>
             );
           })}
         </ul>
       ) : null}
 
-      {result ? (
-        <p className="border-t border-line pt-3 text-xs text-muted">
-          {result.method === "exact"
-            ? "Method: exact. Every possible deal was checked."
-            : `Method: Monte Carlo, ${result.trials.toLocaleString()} random deals per runout.`}
-          {state.runCount > 1 ? " Overall averages the runouts equally." : null}
-        </p>
-      ) : null}
+      {/* Reserved footer: the method line fills it once a result exists. */}
+      <div className="min-h-[2.25rem] border-t border-line pt-3 text-xs text-muted">
+        {displayed
+          ? <>
+              {displayed.method === "exact"
+                ? "Method: exact. Every possible deal was checked."
+                : `Method: Monte Carlo, ${displayed.trials.toLocaleString()} random deals per runout.`}
+              {state.runCount > 1 ? " Overall averages the runouts equally." : null}
+            </>
+          : null}
+      </div>
     </section>
   );
 }

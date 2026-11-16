@@ -6,6 +6,7 @@ import { computeTransfers } from "@/lib/calculations/settlement";
 import { applyAdjustment, computeAdjustment } from "@/lib/calculations/adjustment";
 import type { AdjustmentMethod, GameVariant } from "@/types";
 import { normalizeVariants } from "@/lib/game-variants";
+import { capitalizeName } from "@/lib/player-names";
 import type {
   AuditEntry,
   BuyIn,
@@ -259,7 +260,7 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
 
     case "player/create": {
       // Creates a reusable player profile without joining a game. Names are unique (case-insensitive).
-      const name = action.name.trim();
+      const name = capitalizeName(action.name);
       if (!name || !action.playerId) return state;
       if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return state;
       const player: Player = { id: action.playerId, name, isSample: false, createdAt: action.at };
@@ -273,7 +274,7 @@ export function ledgerReducer(state: LedgerState, action: LedgerAction): LedgerS
       let players = state.players;
       let playerId = action.playerId;
       if (!playerId) {
-        const name = (action.playerName ?? "").trim();
+        const name = capitalizeName(action.playerName ?? "");
         if (!name) return state;
         const existing = players.find((p) => p.name.toLowerCase() === name.toLowerCase());
         if (existing) {

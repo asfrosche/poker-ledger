@@ -6,7 +6,8 @@ import type { EngineInput, TableState } from "@/lib/hand-table/table-state";
 
 export type EquityView =
   | { kind: "waiting"; message: string }
-  | { kind: "calculating" }
+  /** `previous` is the last result, kept on screen (dimmed) so the panel does not collapse while it recalculates. */
+  | { kind: "calculating"; previous?: TableEquity }
   | { kind: "refining"; result: TableEquity; done: number; total: number }
   | { kind: "ready"; result: TableEquity }
   | { kind: "error"; message: string };
@@ -90,7 +91,9 @@ export function useTableEquity(state: TableState): EquityView {
   if (typeof Worker === "undefined") {
     return { kind: "error", message: "This browser cannot run the calculation." };
   }
-  if (!progress || progress.key !== key) return { kind: "calculating" };
+  if (!progress || progress.key !== key) {
+    return { kind: "calculating", previous: progress?.final ?? progress?.shown };
+  }
   if (progress.error !== undefined) return { kind: "error", message: progress.error };
   if (progress.final) return { kind: "ready", result: progress.final };
   if (progress.shown) {

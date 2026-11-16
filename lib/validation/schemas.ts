@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseMoneyToPaise, SUPPORTED_CURRENCIES } from "@/lib/money";
+import { capitalizeName } from "@/lib/player-names";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date");
 const isoTimestamp = z.string().min(1);
@@ -119,7 +120,8 @@ export const unlockReasonSchema = z
 
 const playerRecordSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  // Names saved before capitalisation was enforced are fixed on load.
+  name: z.string().transform(capitalizeName),
   isSample: z.boolean(),
   createdAt: isoTimestamp,
 });
