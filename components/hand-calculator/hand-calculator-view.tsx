@@ -30,6 +30,7 @@ import { VARIANT_LABELS } from "@/lib/hand-table/variant";
 import { outsForSeats } from "@/lib/hand-table/outs";
 import { PokerTable, RunoutList } from "./poker-table";
 import { SeatRoster } from "./seat-roster";
+import { ExtrasPanel } from "./extras-panel";
 
 const RUN_OPTIONS: { count: RunCount; label: string; short: string }[] = [
   { count: 1, label: "Run once", short: "1x" },
@@ -229,6 +230,14 @@ export function HandCalculatorView() {
           />
         </div>
       </div>
+
+      <ExtrasPanel
+        table={table}
+        seatName={seatName}
+        equity={equity}
+        onReplace={(next) => setTable(next)}
+        newId={newId}
+      />
     </div>
   );
 }
