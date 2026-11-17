@@ -1,7 +1,7 @@
 // Pure state for the hand calculator table. No React and no poker maths live here.
 // The evaluation engine will read the table only through `toEngineInput`.
 
-import type { Card } from "@/lib/poker/cards";
+import { FULL_DECK, type Card } from "@/lib/poker/cards";
 import { HOLE_COUNT, type Variant } from "./variant";
 
 export const MAX_SEATS = 9;
@@ -280,6 +280,55 @@ export function setRunCount(state: TableState, runCount: RunCount): TableState {
     next = { ...next, board };
   }
   return normalize(next);
+}
+
+/** Shuffles a copy of the cards with Fisher-Yates. `rng` returns numbers in [0, 1). */
+function shuffled(cards: readonly Card[], rng: () => number): Card[] {
+  const deck = [...cards];
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+/**
+ * Deals every seated player a random hand for the current variant. The board and runouts are kept, and
+ * no card is dealt twice. Hole cards already on the table are replaced.
+ */
+export function randomHands(state: TableState, rng: () => number = Math.random): TableState {
+  const onBoard = new Set<Card>();
+  for (const card of state.board) if (card !== null) onBoard.add(card);
+  for (const run of state.runs) for (const card of run) if (card !== null) onBoard.add(card);
+  const deck = shuffled(FULL_DECK.filter((card) => !onBoard.has(card)), rng);
+
+  const holeCount = HOLE_COUNT[state.variant];
+  let next = 0;
+  const seats = state.seats.map((seat) => {
+    const hole: Slot[] = emptyHole();
+    for (let i = 0; i < holeCount; i++) hole[i] = deck[next++];
+    return { ...seat, hole };
+  });
+  return { ...state, seats, active: null };
+}
+
+/**
+ * Sets a random flop on the shared board, avoiding the cards in every seat's hand. The turn and river are
+ * cleared, and runouts are cleared too, because they were built on the old flop.
+ */
+export function randomFlop(state: TableState, rng: () => number = Math.random): TableState {
+  const inHands = new Set<Card>();
+  for (const seat of state.seats) for (const card of seat.hole) if (card !== null) inHands.add(card);
+  const deck = shuffled(FULL_DECK.filter((card) => !inHands.has(card)), rng);
+
+  const board = emptyBoard();
+  for (let i = 0; i < 3; i++) board[i] = deck[i];
+  return {
+    ...state,
+    board,
+    runs: Array.from({ length: MAX_RUNS }, () => emptyBoard()),
+    active: null,
+  };
 }
 
 /** Empties every card from the table but keeps the seats, their players and the game variant. */
