@@ -151,11 +151,12 @@ export function CardPicker({
                 key={suit}
                 role="columnheader"
                 className={clsx(
-                  "text-center font-mono text-[10px] uppercase tracking-[0.1em] text-muted",
+                  "flex flex-col items-center text-center font-mono text-[10px] uppercase tracking-[0.1em] text-muted",
                   isRedSuit(suit) && "text-red-600",
                 )}
               >
-                {SUIT_SYMBOLS[suit]} {SUIT_NAMES[suit]}
+                <span>{SUIT_SYMBOLS[suit]}</span>
+                <span>{SUIT_NAMES[suit]}</span>
               </span>
             ))}
           </div>
