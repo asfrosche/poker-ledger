@@ -142,8 +142,9 @@ export function CardPicker({
         {/* Desktop and tablet: ranks as rows, suits as columns. */}
         <div role="grid" aria-label="Playing cards" className="hidden flex-col gap-1 sm:flex">
           <div role="row" className="grid grid-cols-[2.25rem_repeat(4,minmax(0,1fr))] gap-1">
-            <span role="columnheader" className="sr-only">
-              Rank
+            {/* Kept in the grid flow so the suit headers line up with the card columns below. */}
+            <span role="columnheader" className="flex items-center justify-center">
+              <span className="sr-only">Rank</span>
             </span>
             {SUIT_COLUMNS.map((suit) => (
               <span
