@@ -107,7 +107,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <p className="hidden font-mono text-[11px] text-muted sm:block">
           Data is saved in this browser. The app never moves money; payments are recorded after you complete them yourself.
         </p>
-        <p className="font-mono text-[11px] text-muted">Created by asfrosche</p>
+        <p className="font-mono text-[11px] text-muted">
+          Created by{" "}
+          <a
+            href="https://github.com/asfrosche"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-ink"
+          >
+            asfrosche
+          </a>
+        </p>
       </footer>
     </div>
   );
