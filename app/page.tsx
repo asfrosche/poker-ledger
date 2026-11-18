@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Calculator, Handshake, History, LayoutGrid, Plus, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
+import { LearningVideos } from "@/components/ui/learning-videos";
 import { PageHeading, Panel } from "@/components/ui/primitives";
 
 const PRIMARY_LINK =
@@ -70,6 +71,8 @@ export default function HomePage() {
           </Link>
         </div>
       </Panel>
+
+      <LearningVideos />
 
       <section aria-labelledby="features-heading" className="flex flex-col gap-3">
         <h2 id="features-heading" className="label">
