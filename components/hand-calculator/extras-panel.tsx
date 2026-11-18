@@ -228,7 +228,7 @@ function HeatmapSection({ table }: { table: TableState }) {
         <p className="text-sm text-loss">{job.error}</p>
       ) : job.status === "ready" ? (
         <>
-          <div role="group" aria-label="Starting hand equity heatmap" className="grid grid-cols-[repeat(13,minmax(0,1fr))] gap-[2px] [container-type:inline-size]">
+          <div role="group" aria-label="Starting hand equity heatmap" className="mx-auto grid w-full max-w-[42rem] grid-cols-[repeat(13,minmax(0,1fr))] gap-[2px] [container-type:inline-size]">
             {GRID.map((row, r) =>
               row.map((cls, c) => {
                 const value = job.result[r][c];
@@ -242,7 +242,7 @@ function HeatmapSection({ table }: { table: TableState }) {
                     onClick={() => setSelected({ r, c })}
                     title={known ? `${cls.label}: ${(value * 100).toFixed(1)}%` : `${cls.label}: blocked by the board`}
                     className={clsx(
-                      "flex aspect-square min-w-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[4px] border border-black/10 text-[min(13.5px,4.2cqi)] leading-none font-medium tabular-nums sm:text-[15px]",
+                      "flex aspect-square min-w-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[4px] border border-black/10 text-[min(13.5px,4.2cqi)] leading-none font-medium tabular-nums sm:text-[13px]",
                       isSelected && "ring-2 ring-ink ring-offset-1 ring-offset-panel",
                     )}
                     style={{

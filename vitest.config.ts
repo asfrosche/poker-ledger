@@ -8,5 +8,7 @@ export default defineConfig({
   test: {
     include: ["lib/**/*.test.ts"],
     environment: "node",
+    // Monte Carlo and exhaustive-oracle tests are CPU-bound; the 5 s default is too tight under parallel load.
+    testTimeout: 30_000,
   },
 });

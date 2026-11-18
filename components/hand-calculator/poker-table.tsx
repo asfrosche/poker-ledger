@@ -101,10 +101,10 @@ export function PokerTable({ state, seatName, onSelect, onClear, outs }: Props) 
         </div>
       ) : null}
 
-      {/* Seats. Four players sit on the diagonals so no seat lands on the board's centre line. */}
+      {/* Seats. Seat 1 starts at the top of the oval (-90°) and the rest follow clockwise. Four players sit on the diagonals so no seat lands on the board's centre line. */}
       {state.seats.map((seat, i) => {
         const offset = count === 4 ? Math.PI / 4 : 0;
-        const angle = Math.PI / 2 + offset + (i * 2 * Math.PI) / count;
+        const angle = -Math.PI / 2 + offset + (i * 2 * Math.PI) / count;
         const owns = active !== null && active.kind === "hole" && active.seatId === seat.id;
         return (
           <SeatView
