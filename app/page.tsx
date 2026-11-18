@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Calculator, Handshake, History, LayoutGrid, Plus, Settings as SettingsIcon, type LucideIcon } from "lucide-react";
+import { HandOrderMenu } from "@/components/hand-calculator/hand-order-menu";
 import { PageHeading, Panel } from "@/components/ui/primitives";
 
 const PRIMARY_LINK =
@@ -47,6 +48,9 @@ const STEPS = [
   "Open Settle to see who pays whom. Pay each other directly, then mark each payment done.",
 ];
 
+// Matches the other pages: the homepage is not validated for instant navigation.
+export const instant = false;
+
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-8 sm:gap-10">
@@ -68,6 +72,19 @@ export default function HomePage() {
           <Link href="/chip-board" className={SECONDARY_LINK}>
             Open chips
           </Link>
+        </div>
+      </Panel>
+
+      <Panel className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="label">New to poker?</h2>
+          <p className="text-sm text-muted">
+            Tap <span className="font-medium text-ink">Hand order</span> to see every hand, what it means, and how-to-play
+            videos.
+          </p>
+        </div>
+        <div className="shrink-0">
+          <HandOrderMenu />
         </div>
       </Panel>
 

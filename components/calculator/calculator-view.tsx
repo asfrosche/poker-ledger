@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { clsx } from "clsx";
+import { HandOrderMenu } from "@/components/hand-calculator/hand-order-menu";
 import { FieldLabel, PageHeading, Panel } from "@/components/ui/primitives";
 import { Card, RANK_NAMES, SUIT_SYMBOLS, cardRank, cardSuit, makeCard } from "@/lib/poker/cards";
 import { evaluateBest, handCategoryName } from "@/lib/poker/evaluate";
@@ -104,9 +105,12 @@ export function CalculatorView() {
         eyebrow="Tools"
         title="Odds calculator"
         actions={
-          <button type="button" onClick={reset} className="h-9 rounded-[10px] border border-line bg-panel px-3 text-xs font-medium hover:bg-surface">
-            Clear cards
-          </button>
+          <>
+            <HandOrderMenu />
+            <button type="button" onClick={reset} className="h-9 rounded-[10px] border border-line bg-panel px-3 text-xs font-medium hover:bg-surface">
+              Clear cards
+            </button>
+          </>
         }
       />
 

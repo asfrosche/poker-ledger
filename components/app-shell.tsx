@@ -109,12 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </p>
         <p className="font-mono text-[11px] text-muted">
           Created by{" "}
-          <a
-            href="https://github.com/asfrosche"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 hover:text-ink"
-          >
+          <a href="mailto:asureka@uwaterloo.ca" className="underline underline-offset-2 hover:text-ink">
             asfrosche
           </a>
         </p>

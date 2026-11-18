@@ -22,6 +22,7 @@ import {
 } from "@/lib/hand-table/table-state";
 import type { Card } from "@/lib/poker/cards";
 import { CardPicker } from "./card-picker";
+import { HandOrderMenu } from "./hand-order-menu";
 import { EquityPanel } from "./equity-panel";
 import { OutsChip } from "./outs-chip";
 import { useTableEquity } from "./use-table-equity";
@@ -121,13 +122,16 @@ export function HandCalculatorView() {
         title="Hand calculator"
         keepRow
         actions={
-          <button
-            type="button"
-            onClick={() => setTable((t) => clearCards(t))}
-            className="h-9 rounded-[10px] border border-line bg-panel px-3 text-xs font-medium hover:bg-surface"
-          >
-            Clear cards
-          </button>
+          <>
+            <HandOrderMenu />
+            <button
+              type="button"
+              onClick={() => setTable((t) => clearCards(t))}
+              className="h-9 rounded-[10px] border border-line bg-panel px-3 text-xs font-medium hover:bg-surface"
+            >
+              Clear cards
+            </button>
+          </>
         }
       />
 
