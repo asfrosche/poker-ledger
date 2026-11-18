@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6 sm:py-3">
-          <Link href="/chip-board" className="shrink-0 font-mono text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm">
+          <Link href="/" className="shrink-0 font-mono text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm">
             <span className="mr-2 inline-block size-2 rounded-sm bg-accent align-middle" aria-hidden />
             Poker Ledger
           </Link>

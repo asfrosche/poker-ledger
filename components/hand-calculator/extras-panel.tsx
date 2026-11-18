@@ -228,12 +228,14 @@ function HeatmapSection({ table }: { table: TableState }) {
         <p className="text-sm text-loss">{job.error}</p>
       ) : job.status === "ready" ? (
         <>
-          <div role="group" aria-label="Starting hand equity heatmap" className="mx-auto grid w-full max-w-[42rem] grid-cols-[repeat(13,minmax(0,1fr))] gap-[2px] [container-type:inline-size]">
+          <div role="group" aria-label="Starting hand equity heatmap" className="mx-auto grid w-full max-w-[42rem] grid-cols-[repeat(13,minmax(0,1fr))] gap-px sm:gap-[2px] [container-type:inline-size]">
             {GRID.map((row, r) =>
               row.map((cls, c) => {
                 const value = job.result[r][c];
                 const known = Number.isFinite(value);
                 const isSelected = selected?.r === r && selected?.c === c;
+                // Hands containing a ten (labels such as "A10s" or "1010") use a slightly smaller label.
+                const hasTen = cls.label.includes("10");
                 return (
                   <button
                     type="button"
@@ -242,7 +244,9 @@ function HeatmapSection({ table }: { table: TableState }) {
                     onClick={() => setSelected({ r, c })}
                     title={known ? `${cls.label}: ${(value * 100).toFixed(1)}%` : `${cls.label}: blocked by the board`}
                     className={clsx(
-                      "flex aspect-square min-w-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-[4px] border border-black/10 text-[min(13.5px,4.2cqi)] leading-none font-medium tabular-nums sm:text-[13px]",
+                      "flex aspect-square min-w-0 items-center justify-center overflow-hidden whitespace-nowrap text-center rounded-[4px] border border-black/10 leading-none font-medium tabular-nums",
+                      // Phone sizes scale with the grid width so the longest label ("A10s", 4 characters) fits its cell.
+                      hasTen ? "text-[min(12px,2.6cqi)] sm:text-[11.5px]" : "text-[min(13.5px,3.2cqi)] sm:text-[13px]",
                       isSelected && "ring-2 ring-ink ring-offset-1 ring-offset-panel",
                     )}
                     style={{
